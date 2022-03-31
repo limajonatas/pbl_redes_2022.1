@@ -20,6 +20,7 @@ public class Caminhao {
     private static JSONObject json;
     private static MainViewCaminhao mainview;
     private static boolean serverOk;
+    private static JSONObject lixeiras;
     
     /*
     Criar aquirvo JSON
