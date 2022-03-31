@@ -1,13 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package caminhao;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import java.awt.Color;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  *
@@ -18,6 +18,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     private double capacidade_maxima;
     private double capacidade_atual;
     private double capacidade_disponivel;
+    private JSONObject jsonLixeira;
 
     /**
      * Creates new form MainView
@@ -39,10 +40,35 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         this.label_lixeira_atual.setForeground(Color.red);
         this.btn_coletar.setEnabled(false);
         this.progress_coletando.setVisible(false);
+        
+        this.setVisible(true);
+        
+        try {
+            this.jsonLixeira=new JSONObject();
+            this.jsonLixeira.put("lixeira_prox", "");
+        } catch (JSONException ex) {
+            Logger.getLogger(MainViewCaminhao.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public void setDados(double cap_atual, boolean connected) {
+    
+    }
+    public void set_status_server_existCaminhao(){
+        this.label_add_cap_maxima.setText("Já existe um caminhão!");
+        this.label_add_cap_maxima.setVisible(true);
+        this.label_add_cap_maxima.setForeground(Color.red);
     }
 
     public double getCapacidadeMaxima() {
         return capacidade_maxima;
+    }
+    
+    public JSONObject getDate() throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("capacidade_atual", this.capacidade_atual);
+
+        return json;
     }
 
     /**
@@ -72,6 +98,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         label_proxima_lixeira = new javax.swing.JLabel();
         btn_confirma_cap_max = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
+        btn_restart = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(440, 330));
@@ -171,6 +198,10 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         jLabel1.setIcon(new javax.swing.ImageIcon("C:\\Users\\dhoml\\Documents\\NetBeansProjects\\pbl_redes_2022.1\\P1_Coleta_de_lixo\\Caminhao\\images\\coleta.png")); // NOI18N
         getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 0, -1, -1));
 
+        btn_restart.setText("Restart");
+        btn_restart.setEnabled(false);
+        getContentPane().add(btn_restart, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 10, 70, -1));
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -224,7 +255,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new MainViewCaminhao().setVisible(true);
+                new MainViewCaminhao();
             }
         });
     }
@@ -232,6 +263,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_coletar;
     private javax.swing.JButton btn_confirma_cap_max;
+    private javax.swing.JButton btn_restart;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel7;
