@@ -4,23 +4,44 @@
  */
 package caminhao;
 
+import com.formdev.flatlaf.FlatDarkLaf;
+import java.awt.Color;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+
 /**
  *
  * @author jonatas
  */
 public class MainViewCaminhao extends javax.swing.JFrame {
+
     private double capacidade_maxima;
     private double capacidade_atual;
     private double capacidade_disponivel;
-            
+
     /**
      * Creates new form MainView
      */
     public MainViewCaminhao() {
         initComponents();
+
+        this.setTitle("Caminhao");
+        this.setLocationRelativeTo(null);
+        this.spinner_capacidade_maxima.setForeground(Color.yellow);
+
+        this.label_txt_cap_atual.setForeground(Color.red);
+        this.label_txt_cap_disp.setForeground(Color.red);
+        this.label_txt_cap_max.setForeground(Color.red);
+        this.label_capacidade_atual.setForeground(Color.red);
+        this.label_capacidade_disponivel.setForeground(Color.red);
+        this.label_capacidade_maxima.setForeground(Color.red);
+        this.label_proxima_lixeira.setForeground(Color.red);
+        this.label_lixeira_atual.setForeground(Color.red);
+        this.btn_coletar.setEnabled(false);
+        this.progress_coletando.setVisible(false);
     }
-    
-    public double getCapacidadeMaxima(){
+
+    public double getCapacidadeMaxima() {
         return capacidade_maxima;
     }
 
@@ -33,22 +54,153 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setResizable(false);
+        label_txt_cap_atual = new javax.swing.JLabel();
+        label_txt_cap_max = new javax.swing.JLabel();
+        label_txt_cap_disp = new javax.swing.JLabel();
+        label_capacidade_maxima = new javax.swing.JLabel();
+        label_capacidade_atual = new javax.swing.JLabel();
+        label_capacidade_disponivel = new javax.swing.JLabel();
+        btn_coletar = new javax.swing.JButton();
+        jLabel7 = new javax.swing.JLabel();
+        label_lixeira_atual = new javax.swing.JLabel();
+        spinner_capacidade_maxima = new javax.swing.JSpinner();
+        label_add_cap_maxima = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        jLabel10 = new javax.swing.JLabel();
+        progress_coletando = new javax.swing.JProgressBar();
+        jPanel1 = new javax.swing.JPanel();
+        label_proxima_lixeira = new javax.swing.JLabel();
+        btn_confirma_cap_max = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(440, 330));
+        setResizable(false);
+        getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        label_txt_cap_atual.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        label_txt_cap_atual.setText("CAPACIDADE ATUAL: ");
+        getContentPane().add(label_txt_cap_atual, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 62, -1, -1));
+
+        label_txt_cap_max.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        label_txt_cap_max.setText("CAPACIDADE MÁXIMA: ");
+        getContentPane().add(label_txt_cap_max, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 100, -1, -1));
+
+        label_txt_cap_disp.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        label_txt_cap_disp.setText("ESPAÇO DISPONÍVEL: ");
+        getContentPane().add(label_txt_cap_disp, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, 151, -1));
+
+        label_capacidade_maxima.setFont(new java.awt.Font("Agency FB", 1, 18)); // NOI18N
+        label_capacidade_maxima.setText("0.00");
+        getContentPane().add(label_capacidade_maxima, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 100, 42, -1));
+
+        label_capacidade_atual.setFont(new java.awt.Font("Agency FB", 1, 36)); // NOI18N
+        label_capacidade_atual.setText("0.00");
+        getContentPane().add(label_capacidade_atual, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 52, 110, -1));
+
+        label_capacidade_disponivel.setFont(new java.awt.Font("Agency FB", 1, 14)); // NOI18N
+        label_capacidade_disponivel.setText("0.00");
+        getContentPane().add(label_capacidade_disponivel, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 130, 42, -1));
+
+        btn_coletar.setText("COLETAR");
+        btn_coletar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_coletarActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btn_coletar, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 200, -1, -1));
+
+        jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel7.setText("LIXEIRA ATUAL NA POSICAO ");
+        getContentPane().add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 160, 440, -1));
+
+        label_lixeira_atual.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        label_lixeira_atual.setText("n/d");
+        getContentPane().add(label_lixeira_atual, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 180, 440, -1));
+        getContentPane().add(spinner_capacidade_maxima, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 20, 80, -1));
+
+        label_add_cap_maxima.setForeground(new java.awt.Color(255, 255, 102));
+        label_add_cap_maxima.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        label_add_cap_maxima.setText("Adicione a capacidade máxima:");
+        getContentPane().add(label_add_cap_maxima, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 440, -1));
+
+        jSeparator1.setPreferredSize(new java.awt.Dimension(450, 10));
+        getContentPane().add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 155, 390, 10));
+
+        jLabel10.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel10.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel10.setText("Próxima lixeira");
+        getContentPane().add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 250, 440, -1));
+        getContentPane().add(progress_coletando, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 230, 200, 5));
+
+        jPanel1.setBackground(new java.awt.Color(51, 51, 51));
+        jPanel1.setForeground(new java.awt.Color(204, 204, 204));
+
+        label_proxima_lixeira.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        label_proxima_lixeira.setText("n/d");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(label_proxima_lixeira, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(label_proxima_lixeira, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 270, 280, 20));
+
+        btn_confirma_cap_max.setBackground(new java.awt.Color(102, 0, 102));
+        btn_confirma_cap_max.setForeground(new java.awt.Color(255, 255, 51));
+        btn_confirma_cap_max.setText("OK");
+        btn_confirma_cap_max.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_confirma_cap_maxActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btn_confirma_cap_max, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 20, -1, -1));
+
+        jLabel1.setIcon(new javax.swing.ImageIcon("C:\\Users\\dhoml\\Documents\\NetBeansProjects\\pbl_redes_2022.1\\P1_Coleta_de_lixo\\Caminhao\\images\\coleta.png")); // NOI18N
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 0, -1, -1));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btn_coletarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_coletarActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btn_coletarActionPerformed
+
+    private void btn_confirma_cap_maxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_confirma_cap_maxActionPerformed
+        int i = (int) this.spinner_capacidade_maxima.getValue();
+        if (i > 0) {
+            this.label_txt_cap_atual.setForeground(Color.white);
+            this.label_txt_cap_disp.setForeground(Color.white);
+            this.label_txt_cap_max.setForeground(Color.white);
+            this.label_capacidade_atual.setForeground(Color.white);
+            this.label_capacidade_disponivel.setForeground(Color.white);
+            this.label_capacidade_maxima.setForeground(Color.white);
+            this.label_proxima_lixeira.setForeground(Color.white);
+            this.label_lixeira_atual.setForeground(Color.white);
+           // this.btn_coletar.setEnabled(true);
+
+            this.label_add_cap_maxima.setVisible(false);
+            this.btn_confirma_cap_max.setVisible(false);
+            this.spinner_capacidade_maxima.setVisible(false);
+
+            double a = (double) i;
+            this.label_capacidade_maxima.setText("" + a);
+            this.capacidade_maxima = a;
+        }
+
+    }//GEN-LAST:event_btn_confirma_cap_maxActionPerformed
 
     /**
      * @param args the command line arguments
@@ -60,20 +212,9 @@ public class MainViewCaminhao extends javax.swing.JFrame {
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MainViewCaminhao.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MainViewCaminhao.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MainViewCaminhao.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(MainViewCaminhao.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            UIManager.setLookAndFeel(new FlatDarkLaf());
+        } catch (UnsupportedLookAndFeelException ex) {
+            System.err.println("Failed to initialize LaF");
         }
         //</editor-fold>
         //</editor-fold>
@@ -89,5 +230,23 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btn_coletar;
+    private javax.swing.JButton btn_confirma_cap_max;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JLabel label_add_cap_maxima;
+    private javax.swing.JLabel label_capacidade_atual;
+    private javax.swing.JLabel label_capacidade_disponivel;
+    private javax.swing.JLabel label_capacidade_maxima;
+    private javax.swing.JLabel label_lixeira_atual;
+    private javax.swing.JLabel label_proxima_lixeira;
+    private javax.swing.JLabel label_txt_cap_atual;
+    private javax.swing.JLabel label_txt_cap_disp;
+    private javax.swing.JLabel label_txt_cap_max;
+    private javax.swing.JProgressBar progress_coletando;
+    private javax.swing.JSpinner spinner_capacidade_maxima;
     // End of variables declaration//GEN-END:variables
 }
