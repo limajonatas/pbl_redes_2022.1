@@ -12,6 +12,7 @@ public class Nuvem extends Thread {
     private static final int porta_servidor = 5000;
     private static DatagramSocket servidorUDP;
     private static JSONObject json;
+    private static boolean there_is_caminhao;
 
     private static class NuvemSend extends Thread {
 
@@ -70,6 +71,12 @@ public class Nuvem extends Thread {
                             break;
                         case 2:
                             System.out.println("_________\nÉ O CAMINHAO");
+                            if (there_is_caminhao) {//se há um caminhao conectado
+                                //chamar um método para retornar um mensagem de erro para o caminhao
+                                enviar_msg_caminhaoExistente(msgAEnviar, obj, ipCliente, envelopeAReceber);
+                            } else {
+                                connectionCaminhao(obj, ipCliente, envelopeAReceber);///criar a thread que se comunica com o caminhao
+                            }
                             break;
                         case 3:
                             System.out.println("________\nÉ A LIXEIRA");
@@ -98,6 +105,34 @@ public class Nuvem extends Thread {
                 System.err.println("ERRO AO CRIAR SERVIDOR");
             }
         }
+    }
+
+    public static void enviar_msg_caminhaoExistente(byte[] msgAEnviar, JSONObject obj,
+            InetAddress ipCliente, DatagramPacket envelopeAReceber) throws JSONException, IOException {
+        
+        System.out.println("ENVIEI PARA O CAMINHAO");
+        obj = new JSONObject();
+        obj.put("msg", "EXIST");
+        msgAEnviar = obj.toString().getBytes();
+
+        DatagramPacket envelopeAEnviar
+                = new DatagramPacket(msgAEnviar, msgAEnviar.length,
+                        ipCliente, envelopeAReceber.getPort());
+        
+        servidorUDP.send(envelopeAEnviar);
+    }
+
+    public static void connectionCaminhao(JSONObject obj, InetAddress ipCaminhao, DatagramPacket envelopeAReceber) {
+        Thread c = new Thread() {
+            @Override
+            public void run() {
+                while (true) {
+
+                }
+            }
+        };
+        c.start();
+
     }
 
     public static void connectionLixeira(byte[] msgAEnviar, JSONObject obj,
@@ -164,6 +199,7 @@ public class Nuvem extends Thread {
     }
 
     public static void main(String[] args) {
+        there_is_caminhao = true;
         json = new JSONObject();
         try {
             servidorUDP = new DatagramSocket(porta_servidor);
