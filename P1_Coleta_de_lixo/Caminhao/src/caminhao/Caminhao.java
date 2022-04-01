@@ -80,7 +80,7 @@ public class Caminhao extends Thread {
 
     /**
      * Thread específica para quando conectar-se ao servidor.
-     * 
+     *
      */
     public static void receiveThread() {
         Thread a = new Thread() {
@@ -99,15 +99,33 @@ public class Caminhao extends Thread {
                         System.out.println("\n________\nCHEGOU DO SERVIDOR:" + mensagemRecebida + "\n");
                         JSONObject obj = new JSONObject(mensagemRecebida);
                         
-                        if (obj.getString("msg").equals("OK")) {
+                        json.put("restart", false);
+                        
+                        if (obj.getString("msg").equals("PROX")) { //se há lixeira //RECEBE INFO DA PROX LIXEIRA
                             serverOk = true;
                             json.put("connected", true);
-                            System.out.println("SERVIDOR OK");
-                            System.out.println(json.toString());
+                            System.out.println("SERVIDOR ENVIOU INFO SOBRE NOVA LIXEIRA");
+
+                            json.put("msg", "COLLECTED");
+
+                            //no final enviar o json - alterar msg para: "COLLECTED"
+                            //add ao json a latitude e longitude da lixeira.
                         } else if (obj.getString("msg").equals("EXIST")) {
                             serverOk = true;
+                            json.put("connected", true);
                             System.out.println("JÁ EXISTE UM CAMINHAO CONNECTADO!");
                             mainview.set_status_server_existCaminhao();
+                        } else if (obj.getString("msg").equals("NULL")) {
+                            serverOk = true;
+                            json.put("connected", true);
+                            System.out.println("NÃO EXISTE LIXEIRAS!");
+                        } else if (obj.getString("msg").equals("ALLCOLLECTED")) {
+                            serverOk = true;
+                            json.put("connected", true);
+                            //while() espera ate que o botao de reiniciar seja acionado
+                            //apos isso enviar mensagem de reistartar
+                            json.put("restart", true);
+
                         }
 
                         set_get_Date();
@@ -116,14 +134,35 @@ public class Caminhao extends Thread {
                     } catch (IOException | JSONException | InterruptedException ex) {
                         Logger.getLogger(Caminhao.class.getName()).log(Level.SEVERE, null, ex);
                     }
+
+                    ///VERIFICAR SE HÁ LIXEIRA/PROXIMA LIXEIRA-SOLICITANDO AO SERVIDOR
+                    byte[] cartaAEnviar = new byte[1024]; //criando um array de byte (necessário)
+                    DatagramPacket envelopeAEnviar = null;
+                    try {
+                        json.put("requisitar", true);
+                        cartaAEnviar = (json.toString()).getBytes(); //converte a mensagem String para array de bytes
+
+                        //InetAddress ip = InetAddress.getByName(""); //atribuindo o ip
+                        //adicionar a mensagem à um "envelope", que inclui o tamanho, ip e a porta de destino
+                        envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ((InetAddress) json.get("address")), 5000);
+                    } catch (JSONException ex) {
+                        Logger.getLogger(Caminhao.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                    try {
+                        cliente.send(envelopeAEnviar); //aqui envia esse envelope com sua mensagem 
+                    } catch (IOException ex) {
+                        Logger.getLogger(Caminhao.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
                 }
             }
         };
         a.start();
     }
-    
 
- /*
+
+    /*
     Criar aquirvo JSON
      */
     public static void createJson() throws JSONException {
@@ -131,6 +170,9 @@ public class Caminhao extends Thread {
         json.put("type", 2); //por enquanto para identificar que é um caminhao- nº3
         json.put("capacidade_atual", 0);
         json.put("connected", false); //conectado ao servidor
+        json.put("requisitar", false);
+        json.put("restart", false);// reiniciar novo process de coleta
+
     }
 
     public static void inserirdados() throws JSONException, UnknownHostException {
