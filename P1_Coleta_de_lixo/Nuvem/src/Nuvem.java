@@ -2,7 +2,10 @@
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.*;
 
 public class Nuvem extends Thread {
@@ -75,12 +78,17 @@ public class Nuvem extends Thread {
                                 //chamar um método para retornar um mensagem de erro para o caminhao
                                 enviar_msg_caminhaoExistente(msgAEnviar, obj, ipCliente, envelopeAReceber);
                             } else {
-                                connectionCaminhao(obj, ipCliente, envelopeAReceber);///criar a thread que se comunica com o caminhao
+                                /* if (obj.getBoolean("requisitar")) { //o caminhao está requisitando...
+                                    connectionCaminhao(obj, ipCliente, envelopeAReceber);
+                                }*/
+                                connectionCaminhao(obj, ipCliente, envelopeAReceber);
                             }
+
                             break;
                         case 3:
                             System.out.println("________\nÉ A LIXEIRA");
                             connectionLixeira(msgAEnviar, obj, ipCliente, envelopeAReceber);
+
                             break;
 
                         default:
@@ -109,7 +117,7 @@ public class Nuvem extends Thread {
 
     public static void enviar_msg_caminhaoExistente(byte[] msgAEnviar, JSONObject obj,
             InetAddress ipCliente, DatagramPacket envelopeAReceber) throws JSONException, IOException {
-        
+
         System.out.println("ENVIEI PARA O CAMINHAO");
         obj = new JSONObject();
         obj.put("msg", "EXIST");
@@ -118,62 +126,140 @@ public class Nuvem extends Thread {
         DatagramPacket envelopeAEnviar
                 = new DatagramPacket(msgAEnviar, msgAEnviar.length,
                         ipCliente, envelopeAReceber.getPort());
-        
+
         servidorUDP.send(envelopeAEnviar);
     }
 
-    public static void connectionCaminhao(JSONObject obj, InetAddress ipCaminhao, DatagramPacket envelopeAReceber) {
-        Thread c = new Thread() {
-            @Override
-            public void run() {
-                while (true) {
+    public static void connectionCaminhao(JSONObject objReceive, InetAddress ipCaminhao,
+            DatagramPacket envelopeAReceber) throws JSONException {
+
+        byte[] msgAEnviar = new byte[1024];
+        JSONObject objSend = new JSONObject();
+
+        while (true) {
+            if (listJson.isEmpty()) {//não há lixeira
+                System.out.println("ENVIEI PARA O CAMINHAO");
+
+                try {
+                    objSend.put("msg", "NULL");
+                } catch (JSONException ex) {
+                    Logger.getLogger(Nuvem.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                msgAEnviar = objSend.toString().getBytes();
+
+                DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipCaminhao, envelopeAReceber.getPort());
+
+                try {
+                    servidorUDP.send(envelopeAEnviar);
+                } catch (IOException ex) {
+                    Logger.getLogger(Nuvem.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else {
+                if (objReceive.getBoolean("restart")) {//se o caminhao reiniciou o processo.
+                    alterarStatusLixeiras(); //altera os status "collected" de todas as lixeiras para false         
+                }
+                
+
+                objSend.put("msg", "PROX"); //envio de uma próxima lixeira
+
+                //se fez uma coleta anterior - aqui atualiza os dados da lixeira coletada
+                if (objReceive.getString("msg").equals("COLLECTED")) {
+
+                    //alterar dado de lixeira coletada
+                    alteraDadosLixeira(objReceive);
 
                 }
+
+                //se todas lixeiras ja foram coletada, envia uma mensagem para o caminhao, para reiniciar o processo de coleta
+                if (todasLixeirasColetadas()) {
+                    objSend.put("msg", "ALLCOLLECTED");
+                    msgAEnviar = objSend.toString().getBytes();
+
+                    DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipCaminhao, envelopeAReceber.getPort());
+                } else {
+                    //primeira coleta - somente envia para o caminhao a proxima lixeira
+                    ordenarLixeiras();//da mais "cheia" à menos "cheia"
+                    for (int count = 0; count < listJson.size(); count++) {
+                        if (!((JSONObject) listJson.get(count)).getBoolean("collected")) {//evitar que seja a lixeira anterior
+                            objSend.put("latitude_lixeira", (((JSONObject) listJson.get(count)).getInt("latitude")));
+                            objSend.put("longitude_lixeira", (((JSONObject) listJson.get(count)).getInt("longitude")));
+                            objSend.put("capacidade_lixeira", (((JSONObject) listJson.get(count)).getInt("capacida_atual")));
+                            break;
+                        }
+                    }
+                    msgAEnviar = objSend.toString().getBytes();
+
+                    DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipCaminhao, envelopeAReceber.getPort());
+                    //ordena lista primeiro
+                    //verificar se todas foram coletadas.
+                    //enviar a proxima lixeira.
+                    //receber a informacao de que essa lixeira foi coletada
+                }
+
             }
-        };
-        c.start();
+
+            there_is_caminhao = true;
+
+            /*
+            //ESPERAR UMA SOLICITACAO DO CAMINHAO DE LIXO.
+            byte[] cartaAReceber = new byte[1024];
+            envelopeAReceber = new DatagramPacket(cartaAReceber, cartaAReceber.length);
+
+            System.out.println("AGUARDANDO CONFIRMAÇÃO DO SERVIDOR...");
+            try {
+                servidorUDP.receive(envelopeAReceber); //recebe o envelope do Servidor
+            } catch (IOException ex) {
+                Logger.getLogger(Nuvem.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            //converte os dados do envelope para string
+            String mensagemRecebida = new String(envelopeAReceber.getData());
+
+            if (!mensagemRecebida.equals("true")) {
+                System.out.println("MENSAGEM INVALIDA!");
+            }
+             */
+        }
 
     }
 
     public static void connectionLixeira(byte[] msgAEnviar, JSONObject obj,
             InetAddress ipCliente, DatagramPacket envelopeAReceber) throws IOException, JSONException {
 
-        boolean exist = false;
-        int index = 0;
-        //ADICIONAR O JSON DESTA LIXEIRA
-        for (int i = 0; i < listJson.size(); i++) {
-            //comparando as latitudes das lixeiras
-            if (obj.getInt("latitude") == ((JSONObject) listJson.get(i)).getInt("latitude")
-                    && obj.getInt("longitude") == ((JSONObject) listJson.get(i)).getInt("longitude")) {
-                exist = true;
-                index = i;
-                System.out.println("ESSE CARA EXISTE" + exist);
-                break;
+        if (listJson.size() <= 3) {
+            boolean exist = false;
+            int index = 0;
+            //ADICIONAR O JSON DESTA LIXEIRA
+            for (int i = 0; i < listJson.size(); i++) {
+                //comparando as latitudes das lixeiras
+                if (obj.getInt("latitude") == ((JSONObject) listJson.get(i)).getInt("latitude")
+                        && obj.getInt("longitude") == ((JSONObject) listJson.get(i)).getInt("longitude")) {
+                    exist = true;
+                    index = i;
+                    System.out.println("ESSA LIXEIRA EXISTE" + exist);
+                    break;
+                }
             }
-        }
 
-        String a = "Success | MSG RECEIVE: " + obj.toString();
-        String str = "OK";
+            json.put("msg", "OK");
 
-        json.put("msg", "OK");
+            //se existir, atualiza
+            if (exist && (obj.getInt("port") == ((JSONObject) listJson.get(index)).getInt("port"))) {
+                listJson.remove(index);
+                listJson.add(index, obj);
+            } else if (!exist) {//se nao existir a lixeira na lista, adiciona ela
+                listJson.add(obj);
+            } else {
+                System.err.println("ERROR: JA EXISTE UMA LIXEIRA NESSA POSIÇÃO, ALTERE A LATITUDE E LONGITUDE!");
+                json.remove("msg");
+                json.put("msg", "POS");
+            }
 
-        //se existir, atualiza
-        if (exist && (obj.getInt("port") == ((JSONObject) listJson.get(index)).getInt("port"))) {
-            listJson.remove(index);
-            listJson.add(index, obj);
-        } else if (!exist) {//se nao existir a lixeira na lista, adiciona ela
-            listJson.add(obj);
+            System.out.println("___________\nJSON-> " + obj.toString());
+            //System.out.println("___________\nCAPACIDADE DA LIXEIRA" + str+ " -->" + obj.getDouble("capacidade_max") + "\n______");
+
         } else {
-            System.err.println("ERROR: JA EXISTE UMA LIXEIRA NESSA POSIÇÃO, ALTERE A LATITUDE E LONGITUDE!");
-            a = "ERROR: JA EXISTE UMA LIXEIRA NESSA POSIÇÃO, ALTERE A LATITUDE E LONGITUDE!";
-            str = "POS";
-            json.remove("msg");
-            json.put("msg", "POS");
+            json.put("msg", "FULL"); //´nao pode cadastrar mais lixeiras
         }
-
-        System.out.println("___________\nJSON-> " + obj.toString());
-        //System.out.println("___________\nCAPACIDADE DA LIXEIRA" + str+ " -->" + obj.getDouble("capacidade_max") + "\n______");
-
         //msgAEnviar = str.getBytes();
         msgAEnviar = json.toString().getBytes();
 
@@ -181,13 +267,6 @@ public class Nuvem extends Thread {
                 = new DatagramPacket(msgAEnviar, msgAEnviar.length,
                         ipCliente, envelopeAReceber.getPort());
 
-        //ArrayList list = new ArrayList();
-        //list.add(ipCliente);
-        //list.add(envelopeAReceber.getPort());
-        //ADICIONA O ENDEREÇO E PORTA DO CLIENTE
-        /* if (!clientArray.contains(list)) {
-            clientArray.add(list);
-        }*/
         //EXIBE OS CLIENTES QUE QUE ESTÃO NA LISTA
         for (int j = 0; j < listJson.size(); j++) {
             int i = j;
@@ -198,8 +277,75 @@ public class Nuvem extends Thread {
         servidorUDP.send(envelopeAEnviar);
     }
 
+    public static void ordenarLixeiras() throws JSONException {
+        Iterator i = listJson.iterator();
+        ArrayList array = new ArrayList();
+
+        while (i.hasNext()) {
+            JSONObject obj = (JSONObject) i.next();
+
+            //maior que 90%
+            if (obj.getDouble("capacidade_atual") > (obj.getDouble("capacidade_atual") * 0.9)) {
+                array.add(obj);
+            } else if (obj.getDouble("capacidade_atual") > (obj.getDouble("capacidade_atual") * 0.8)) {//>80%
+                array.add(obj);
+            } else if (obj.getDouble("capacidade_atual") > (obj.getDouble("capacidade_atual") * 0.7)) {//>70%
+                array.add(obj);
+            } else if (obj.getDouble("capacidade_atual") > (obj.getDouble("capacidade_atual") * 0.6)) {//>60%
+                array.add(obj);
+            } else if (obj.getDouble("capacidade_atual") > (obj.getDouble("capacidade_atual") * 0.5)) {//>50%
+                array.add(obj);
+            } else if (obj.getDouble("capacidade_atual") > (obj.getDouble("capacidade_atual") * 0.35)) {//>35%
+                array.add(obj);
+            } else if (obj.getDouble("capacidade_atual") > (obj.getDouble("capacidade_atual") * 0.20)) {//>20%
+                array.add(obj);
+            } else if (obj.getDouble("capacidade_atual") > (obj.getDouble("capacidade_atual") * 0.05)) {//>5%
+                array.add(obj);
+            } else if (obj.getDouble("capacidade_atual") < (obj.getDouble("capacidade_atual") * 0.05)) {//<5%
+                array.add(obj);
+            }
+        }
+        listJson.clear();
+        for (Object array1 : array) {
+            listJson.add(array.indexOf(i));
+        }
+    }
+
+    public static int buscarLixeira(int latitude, int longitude) throws JSONException {
+        Iterator i = listJson.iterator();
+        JSONObject obj;
+        int pos = -1;
+        while (i.hasNext()) {
+            pos++;
+            obj = (JSONObject) i.next();
+            if (obj.getInt("latitude") == latitude && obj.getInt("longitude") == longitude) {
+                return pos;
+            }
+        }
+        return pos;
+    }
+
+    public static void alteraDadosLixeira(JSONObject objReceive) throws JSONException {
+        int pos = buscarLixeira(objReceive.getInt("latitude"), objReceive.getInt("longitude"));
+        if (pos != -1) {
+            JSONObject obj = (JSONObject) listJson.get(pos);
+            obj.put("capacidade_atual", 0);
+            obj.put("collected", true);
+            listJson.remove(pos);
+            listJson.add(obj);
+
+        }
+    }
+
+    public static boolean todasLixeirasColetadas() {
+        return true;
+    }
+
+    public static void alterarStatusLixeiras() {
+    }
+
     public static void main(String[] args) {
-        there_is_caminhao = true;
+        there_is_caminhao = false;
         json = new JSONObject();
         try {
             servidorUDP = new DatagramSocket(porta_servidor);
