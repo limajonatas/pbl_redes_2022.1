@@ -19,6 +19,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     private double capacidade_atual;
     private double capacidade_disponivel;
     private JSONObject jsonLixeira;
+    private boolean restart;
 
     /**
      * Creates new form MainView
@@ -147,6 +148,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         getContentPane().add(label_lixeira_atual, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 180, 440, -1));
         getContentPane().add(spinner_capacidade_maxima, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 20, 80, -1));
 
+        label_add_cap_maxima.setBackground(new java.awt.Color(0, 51, 51));
         label_add_cap_maxima.setForeground(new java.awt.Color(255, 255, 102));
         label_add_cap_maxima.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         label_add_cap_maxima.setText("Adicione a capacidade máxima:");
