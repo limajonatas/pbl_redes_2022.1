@@ -150,6 +150,9 @@ public class Lixeira extends Thread {
                             }
 
                             inserirdados();
+                        }else if(obj.getString("msg").equals("FULL")){
+                            System.out.println("NÃO PODE CADASTRAR MAIS LIXEIRAS!");
+                            System.exit(0);
                         }
 
                         set_get_Date();
