@@ -13,7 +13,13 @@ public class Nuvem extends Thread {
     private static ArrayList clientArray;
     private static ArrayList listJson;
     private static final int porta_servidor = 5000;
+    private static final int porta_clientes = 5001;
+    private static final int porta_adm = 5002;
+    private static final int porta_caminhao = 5003;
     private static DatagramSocket servidorUDP;
+    private static DatagramSocket servidor_thread_clientes;
+    private static DatagramSocket servidor_thread_adm;
+    private static DatagramSocket servidor_thread_caminhao;
     private static JSONObject json;
     private static boolean there_is_caminhao;
 
