@@ -14,7 +14,9 @@ import lixeira2.OneViewLixeira;
 public class Lixeira extends Thread {
 
     private static final String ipCliente = "";
-    private static int port;
+    private static int porta;
+    private static int main_port_server;
+    private static int port_server;
     private static DatagramSocket cliente;
     private static JSONObject json;
     private static OneViewLixeira inicializacao;
@@ -28,39 +30,29 @@ public class Lixeira extends Thread {
     @Override
     public void run() {
 
-        //Scanner teclado = new Scanner(System.in);
         while (true) {
-            //System.out.print("Digite s para sair e qualquer coisa para enviar:");
-            //String mensagem = teclado.nextLine();
-            // if (mensagem.equals("s")) {
-            //   cliente.close();
-            //   teclado.close();
-            //  break;
-            //  }
 
             //CÓDIGO PARA ENVIAR UMA MENSAGEM PARA O SERVIDOR
             byte[] cartaAEnviar = new byte[1024]; //criando um array de byte (necessário)
 
             try {
-                //cartaAEnviar = mensagem.getBytes(); //converte a mensagem String para array de bytes
-                cartaAEnviar = (json.toString()).getBytes(); //converte a mensagem String para array de bytes
-                //cartaAEnviar = "HELLO, WORLD!".getBytes(); //teste para enviar arquivo que nao é um JSON
+                Thread.sleep(2000);//2 segundos
 
-                String a = json.toString();
-                System.out.println("__________\n" + a);
+                set_get_Date();
+
+                cartaAEnviar = (json.toString()).getBytes(); //converte a mensagem String para array de bytes
+
+                System.out.println("__________\n" + json.toString());
                 // System.out.println("\n______\nLATITUDE LIXEIRA: "+ toJson().getDouble("latitude") + "\n_____");
 
                 InetAddress ip = InetAddress.getByName(""); //atribuindo o ip
 
                 //adicionar a mensagem à um "envelope", que inclui o tamanho, ip e a porta de destino
-                DatagramPacket envelopeAEnviar
-                        = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ip, 5000);
+                DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ip, port_server);
 
                 cliente.send(envelopeAEnviar); //aqui envia esse envelope com sua mensagem 
 
-                set_get_Date();
-                Thread.sleep(1000);
-
+                //set_get_Date();
             } catch (IOException | JSONException | InterruptedException ex) {
                 Logger.getLogger(Lixeira.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -68,27 +60,16 @@ public class Lixeira extends Thread {
         }
     }
 
-    public void confirmadoServer() throws JSONException {
-
-    }
-
     /*
     Criar aquirvo JSON
      */
     public static void createJson() throws JSONException {
         json = new JSONObject();
-        json.put("type", 3); //por enquanto para identificar que é uma lixeira- nº3
+        json.put("tipo", 3); //por enquanto para identificar que é uma lixeira- nº3
         json.put("capacidade_atual", 0);
         json.put("bloqueio", false); //lixeira está bloqueada
         json.put("connected", false);
-    }
-
-    private void adicionarLixo(double value) throws JSONException {
-        if (value <= (json.getDouble("capacidade_max") - json.getDouble("capacidade_atual"))) {
-            json.put("capacidade_atual", (json.getDouble("capacidade_atual") + value));
-        } else {
-            System.err.println("NAO É POSSÍVEL ADICIONAR ESSA QUANTIDADE DE LIXO NA LIXEIRA!");
-        }
+        json.put("coletada", false);
     }
 
     private void bloquearOnOff() throws JSONException {
@@ -100,22 +81,27 @@ public class Lixeira extends Thread {
     }
 
     public static void inserirdados() throws JSONException, UnknownHostException {
+
+        json.put("id", "");
         json.put("capacidade_max", inicializacao.getCapacidadeMaxima());
         json.put("latitude", inicializacao.getLatitude());
         json.put("longitude", inicializacao.getLongitude());
-        json.put("address", InetAddress.getByName(""));
-        json.put("port", cliente.getLocalPort());
+        json.put("porta", cliente.getLocalPort());
+        json.put("bloqueio", "true");
+        json.put("capacidade_disponivel", inicializacao.getCapacidadeMaxima());
 
-        System.out.println("DADOS LIXEIRO: " + json.toString());//afim de verificar se está tudo ok
+        System.out.println("DADOS LIXEIRA: " + json.toString());//afim de verificar se está tudo ok
     }
 
     public static void startupThreads() {
         Thread send = new Lixeira();
         send.start();
-
         receiveThread();
     }
 
+    /**
+     * RECEBE AS MENSAGENS DO SERVIDOR
+     */
     public static void receiveThread() {
         Thread a = new Thread() {
             @Override
@@ -123,8 +109,7 @@ public class Lixeira extends Thread {
                 while (true) {
 
                     byte[] cartaAReceber = new byte[1024];
-                    DatagramPacket envelopeAReceber
-                            = new DatagramPacket(cartaAReceber, cartaAReceber.length);
+                    DatagramPacket envelopeAReceber = new DatagramPacket(cartaAReceber, cartaAReceber.length);
                     try {
                         System.out.println("AGUARDANDO CONFIRMAÇÃO DO SERVIDOR...");
                         cliente.receive(envelopeAReceber); //recebe o envelope do Servidor
@@ -132,27 +117,39 @@ public class Lixeira extends Thread {
                         String mensagemRecebida = new String(envelopeAReceber.getData());
 
                         System.out.println("\n________\nCHEGOU DO SERVIDOR:" + mensagemRecebida + "\n");
-                        JSONObject obj = new JSONObject(mensagemRecebida);
+                        JSONObject objReceive = new JSONObject(mensagemRecebida);
+                        if (objReceive != null) {
+                            if (objReceive.getString("msg").equals("OK")) {
+                                json.put("connected", true);
+                                json.put("address", objReceive.get("address"));
+                                System.out.println("SERVIDOR OK");
+                                System.out.println(json.toString());
+                            } else if (objReceive.getString("msg").equals("POS")) {
+                                System.out.println("JÁ EXISTE UMA LIXEIRA NESTA POSIÇÃO, FAVOR ALTERE A POSICAO!");
+                                inicializacao.setChargePosition("EXISTE LIXEIRA NESSA POSIÇÃO!");
+                                inicializacao.setVisible(true);
 
-                        if (obj.getString("msg").equals("OK")) {
+                                //aguardar o usuario inserir os dados necessarios da lixeira para continuar
+                                while (inicializacao.isVisible()) {
+                                    System.out.print("");//garatindo o funcionamento do while.
+                                }
 
-                            json.put("connected", true);
-                            System.out.println("SERVIDOR OK");
-                            System.out.println(json.toString());
-                        } else if (obj.getString("msg").equals("POS")) {
-                            System.out.println("JÁ EXISTE UMA LIXEIRA NESTA POSIÇÃO, FAVOR ALTERE A POSICAO!");
-                            inicializacao.setChargePosition("EXISTE LIXEIRA NESSA POSIÇÃO!");
-                            inicializacao.setVisible(true);
-
-                            //aguardar o usuario inserir os dados necessarios da lixeira para continuar
-                            while (inicializacao.isVisible()) {
-                                System.out.print("");//garatindo o funcionamento do while.
+                                inserirdados();
+                            } else if (objReceive.getString("msg").equals("FULL")) {
+                                System.out.println("NÃO PODE CADASTRAR MAIS LIXEIRAS!");
+                                System.exit(0);
+                            } else if (objReceive.getString("msg").equals("PORT")) {//primeira conexao envia a porta
+                                port_server = objReceive.getInt("porta");
+                                json.put("bloqueio", false);
+                                json.put("id", objReceive.getInt("id"));
+                            }else if(objReceive.getString("msg").equals("COLLECTED")){
+                                System.out.println("================== LIXEIRA COLETADA");
+                                json.put("coletada", true);
+                                mainview.foiColetada();
+                            }else if(objReceive.getString("msg").equals("STATUS")){
+                                json.put("coletada", false);
+                                System.out.println("PODE FAZER NOVA COLETA");
                             }
-
-                            inserirdados();
-                        }else if(obj.getString("msg").equals("FULL")){
-                            System.out.println("NÃO PODE CADASTRAR MAIS LIXEIRAS!");
-                            System.exit(0);
                         }
 
                         set_get_Date();
@@ -171,16 +168,18 @@ public class Lixeira extends Thread {
         if (mainview != null) {//garantir que a instancia da tela principal nao seja utilizada antes de ser criada fora da thread
             //pega informação sobre a capacidade atual
             json.put("capacidade_atual", mainview.getDate().getDouble("capacidade_atual"));
+            json.put("capacidade_disponivel", mainview.getDate().getDouble("capacidade_disponivel"));
 
             mainview.setDados(json.getDouble("capacidade_max"),
                     json.getDouble("capacidade_atual"), json.getBoolean("bloqueio"),
-                    json.getInt("latitude"), json.getInt("longitude"), json.getBoolean("connected"));
+                    json.getInt("latitude"), json.getInt("longitude"), json.getBoolean("connected"), json.getDouble("capacidade_disponivel"));
         }
 
     }
 
     public static void main(String args[]) throws JSONException, UnknownHostException {
         try {
+            port_server = 5000;
             cliente = new DatagramSocket();
 
             createJson();
@@ -207,7 +206,7 @@ public class Lixeira extends Thread {
             mainview = new MainViewLixeira();
             mainview.setDados(json.getDouble("capacidade_max"),
                     json.getDouble("capacidade_atual"), json.getBoolean("bloqueio"),
-                    json.getInt("latitude"), json.getInt("longitude"), json.getBoolean("connected"));
+                    json.getInt("latitude"), json.getInt("longitude"), json.getBoolean("connected"), json.getDouble("capacidade_disponivel"));
 
             mainview.setVisible(true);
             Thread t = new Thread() {
