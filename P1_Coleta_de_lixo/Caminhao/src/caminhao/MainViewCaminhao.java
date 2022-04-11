@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -19,7 +20,9 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     private double capacidade_atual;
     private double capacidade_disponivel;
     private JSONObject jsonLixeira;
+    private JSONObject lixeira_atual;
     private boolean restart;
+    private boolean coletado;
 
     /**
      * Creates new form MainView
@@ -41,21 +44,66 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         this.label_lixeira_atual.setForeground(Color.red);
         this.btn_coletar.setEnabled(false);
         this.progress_coletando.setVisible(false);
-        
+
         this.setVisible(true);
-        
+
         try {
-            this.jsonLixeira=new JSONObject();
+            this.jsonLixeira = new JSONObject();
             this.jsonLixeira.put("lixeira_prox", "");
         } catch (JSONException ex) {
             Logger.getLogger(MainViewCaminhao.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+        this.coletado = false;
+        this.restart = false;
     }
-    
+
+    public void setProximaLixeiraNull() {
+        this.jsonLixeira = null;
+        this.label_proxima_lixeira.setText("N/D");
+    }
+
+    public boolean isRestart() { //se o botao restart foi acionado
+        return this.restart;
+    }
+
+    public void set_restart() {
+        this.btn_restart.setEnabled(true);
+    }
+
+    public void set_restartOFF() {
+        this.btn_restart.setEnabled(false);
+        this.restart=false;
+        
+    }
+
+    public void set_prox_lixeira(String lix) throws JSONException {
+        this.jsonLixeira = new JSONObject(lix);
+        this.label_proxima_lixeira.setText("ID: " + this.jsonLixeira.getInt("id") + " LAT: "
+                + this.jsonLixeira.getInt("latitude_lixeira")
+                + "º LON: " + this.jsonLixeira.getInt("longitude_lixeira")
+                + "º CAP: " + this.jsonLixeira.getDouble("capacidade_lixeira"));
+
+        this.btn_coletar.setEnabled(true); //botão é habilitado
+    }
+
+    public boolean isCollected() throws JSONException {//se fez a coleta
+        boolean col = false;
+        if (this.coletado) {//se foi coletado
+            col = this.coletado;
+            this.coletado = false;
+
+            this.jsonLixeira = null;
+        }
+
+        return col;
+    }
+
     public void setDados(double cap_atual, boolean connected) {
-    
+
     }
-    public void set_status_server_existCaminhao(){
+
+    public void set_status_server_existCaminhao() {
         this.label_add_cap_maxima.setText("Já existe um caminhão!");
         this.label_add_cap_maxima.setVisible(true);
         this.label_add_cap_maxima.setForeground(Color.red);
@@ -64,7 +112,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     public double getCapacidadeMaxima() {
         return capacidade_maxima;
     }
-    
+
     public JSONObject getDate() throws JSONException {
         JSONObject json = new JSONObject();
         json.put("capacidade_atual", this.capacidade_atual);
@@ -152,6 +200,15 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         label_add_cap_maxima.setForeground(new java.awt.Color(255, 255, 102));
         label_add_cap_maxima.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         label_add_cap_maxima.setText("Adicione a capacidade máxima:");
+        label_add_cap_maxima.addAncestorListener(new javax.swing.event.AncestorListener() {
+            public void ancestorAdded(javax.swing.event.AncestorEvent evt) {
+                label_add_cap_maximaAncestorAdded(evt);
+            }
+            public void ancestorMoved(javax.swing.event.AncestorEvent evt) {
+            }
+            public void ancestorRemoved(javax.swing.event.AncestorEvent evt) {
+            }
+        });
         getContentPane().add(label_add_cap_maxima, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 440, -1));
 
         jSeparator1.setPreferredSize(new java.awt.Dimension(450, 10));
@@ -202,6 +259,11 @@ public class MainViewCaminhao extends javax.swing.JFrame {
 
         btn_restart.setText("Restart");
         btn_restart.setEnabled(false);
+        btn_restart.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_restartActionPerformed(evt);
+            }
+        });
         getContentPane().add(btn_restart, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 10, 70, -1));
 
         pack();
@@ -209,6 +271,23 @@ public class MainViewCaminhao extends javax.swing.JFrame {
 
     private void btn_coletarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_coletarActionPerformed
         // TODO add your handling code here:
+        this.coletado = true;
+        try {
+            this.capacidade_atual += jsonLixeira.getDouble("capacidade_lixeira");
+            this.label_capacidade_atual.setText("" + this.capacidade_atual);
+            this.btn_coletar.setEnabled(false);
+
+            this.lixeira_atual = new JSONObject(this.jsonLixeira.toString());
+            this.lixeira_atual.put("capacidade_lixeira", 0.0);
+            this.label_lixeira_atual.setText("ID: " + this.lixeira_atual.getInt("id") + " LAT: "
+                    + this.lixeira_atual.getInt("latitude_lixeira")
+                    + "º LON: " + this.lixeira_atual.getInt("longitude_lixeira"));
+
+            this.label_proxima_lixeira.setText("N/D");
+
+        } catch (JSONException ex) {
+            Logger.getLogger(MainViewCaminhao.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_btn_coletarActionPerformed
 
     private void btn_confirma_cap_maxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_confirma_cap_maxActionPerformed
@@ -222,7 +301,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
             this.label_capacidade_maxima.setForeground(Color.white);
             this.label_proxima_lixeira.setForeground(Color.white);
             this.label_lixeira_atual.setForeground(Color.white);
-           // this.btn_coletar.setEnabled(true);
+            // this.btn_coletar.setEnabled(true);
 
             this.label_add_cap_maxima.setVisible(false);
             this.btn_confirma_cap_max.setVisible(false);
@@ -234,6 +313,22 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         }
 
     }//GEN-LAST:event_btn_confirma_cap_maxActionPerformed
+
+    private void btn_restartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_restartActionPerformed
+        // TODO add your handling code here:
+        
+        restart = true;
+        
+        this.label_lixeira_atual.setText("N/D");
+        this.label_proxima_lixeira.setText("N/D");
+        this.btn_restart.setEnabled(false);
+
+
+    }//GEN-LAST:event_btn_restartActionPerformed
+
+    private void label_add_cap_maximaAncestorAdded(javax.swing.event.AncestorEvent evt) {//GEN-FIRST:event_label_add_cap_maximaAncestorAdded
+        // TODO add your handling code here:
+    }//GEN-LAST:event_label_add_cap_maximaAncestorAdded
 
     /**
      * @param args the command line arguments
