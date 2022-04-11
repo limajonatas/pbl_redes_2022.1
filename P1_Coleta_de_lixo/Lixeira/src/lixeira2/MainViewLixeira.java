@@ -38,7 +38,7 @@ public class MainViewLixeira extends javax.swing.JFrame {
      * @param longi
      */
     public void setDados(double cap_max, double cap_atual, boolean bloq,
-            int lat, int longi, boolean connected) {
+            int lat, int longi, boolean connected, double cap_disponivel) {
 
         this.capacidade_atual = cap_atual;
         this.capacidade_maxima = cap_max;
@@ -46,6 +46,7 @@ public class MainViewLixeira extends javax.swing.JFrame {
         this.latitude = lat;
         this.longitude = longi;
         this.connected = connected;
+        this.capacidade_disponivel = cap_disponivel;
 
         this.label_capacidade_atual.setText(Double.toString(this.capacidade_atual));
         this.label_capacidade_maxima.setText(Double.toString(this.capacidade_maxima));
@@ -53,8 +54,10 @@ public class MainViewLixeira extends javax.swing.JFrame {
         this.label_longitude.setText(Integer.toString(this.longitude) + "º");
         if (this.bloqueio) {
             this.label_bloqueio.setText("YES");
+            this.btn_confirmar.setEnabled(false);
         } else {
             this.label_bloqueio.setText("NO");
+            this.btn_confirmar.setEnabled(true);
         }
         if (this.connected) {
             this.label_servidor.setText("SERVIDOR CONECTADO!");
@@ -73,10 +76,16 @@ public class MainViewLixeira extends javax.swing.JFrame {
             this.label_msg_addLixo.setVisible(true);
         }
     }
+    public void foiColetada(){
+        this.capacidade_atual = 0.0;
+        this.capacidade_disponivel = this.capacidade_maxima;
+        this.label_capacidade_atual.setText(""+0.0);
+    }
 
     public JSONObject getDate() throws JSONException {
         JSONObject json = new JSONObject();
         json.put("capacidade_atual", this.capacidade_atual);
+        json.put("capacidade_disponivel", this.capacidade_disponivel);
 
         return json;
     }
