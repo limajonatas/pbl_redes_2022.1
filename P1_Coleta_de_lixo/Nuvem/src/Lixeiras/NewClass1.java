@@ -5,8 +5,12 @@
 package Lixeiras;
 
 import java.net.InetAddress;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 /**
  *
@@ -49,5 +53,25 @@ public class NewClass1 {
             System.out.println(0);
         
         
-    }
+        Random gerador = new Random();
+         System.out.println(gerador.nextInt(-90, 90)+"º");
+         System.out.println(gerador.nextInt(-90, 90)+"º");
+         System.out.println(gerador.nextInt(-90, 90)+"º");
+         System.out.println(gerador.nextInt(-90, 90)+"º");
+         System.out.println(gerador.nextInt(-90, 90)+"º");
+         
+        // JOptionPane.showMessageDialog(new JPanel(), "NÃO É POSSÍVEL CADASTRAR MAIS LIXEIRAS", "JÁ EXISTEM 3 LIXEIRA CONECTADAS", JOptionPane.ERROR_MESSAGE);
+        
+        double max = 1000.00;
+         double disp = 500.0;
+        double cap = 500.0;
+        double div = cap/100;
+        
+         System.out.println("CONTA");
+        for(int i=0; i<= 100; i+=2){
+            double b = (disp+(div*i));
+            System.out.println(b);
+        }
+     
+     }
 }

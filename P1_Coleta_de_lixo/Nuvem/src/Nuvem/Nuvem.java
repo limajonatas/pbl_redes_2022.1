@@ -63,10 +63,16 @@ public class Nuvem extends Thread {
                             }
                             break;
                         case 3:
-                            System.out.println("________\nÉ A LIXEIRA");
-
-                            enviar_porta_cliente(porta_lixeiras, msgAEnviar, obj, ipCliente, envelopeAReceber);
-
+                            System.out.println("________\nÉ UMA A LIXEIRA");
+                            if (lista_2.size() > 2) {//se ja houver 3 lixeiras cadastradas
+                                JSONObject objSend = new JSONObject();
+                                objSend.put("msg", "FULL");
+                                msgAEnviar = objSend.toString().getBytes();
+                                DatagramPacket envelopeAEnviar= new DatagramPacket(msgAEnviar, msgAEnviar.length, ipCliente, envelopeAReceber.getPort());
+                                servidorUDP.send(envelopeAEnviar);
+                            } else {
+                                enviar_porta_cliente(porta_lixeiras, msgAEnviar, obj, ipCliente, envelopeAReceber);
+                            }
                             break;
 
                         default:
@@ -215,12 +221,12 @@ public class Nuvem extends Thread {
                                 if (objReceive.getBoolean("restart")) {//se o caminhao reiniciou o processo.
                                     alterarStatusLixeiras(); //altera os status "collected" de todas as lixeiras para false         
                                     System.out.println("RESTART ON");
-                                    
+
                                     objSend.put("msg", "REINICIADO");
                                     msgAEnviar = objSend.toString().getBytes();
                                     DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipCaminhao, envelopeAReceber.getPort());
                                     servidor_thread_caminhao.send(envelopeAEnviar);
-                                    
+
                                 }
 
                                 objSend.put("msg", "PROX"); //envio de uma próxima lixeira
@@ -323,9 +329,9 @@ public class Nuvem extends Thread {
                             //lista_lixeiras_json.add(objReceive);
                             lista_2.add(lixeira);
                         } else {
-                            if (lista_2.size() <= 3) {
-                                boolean exist = false;
-                                /*
+
+                            boolean exist = false;
+                            /*
                                 System.out.println("======== LISTAAAA: " + lista_lixeiras_json.size() + lista_lixeiras_json.isEmpty());
 
                                 ArrayList<JSONObject> list_aux = new ArrayList<>();
@@ -353,30 +359,26 @@ public class Nuvem extends Thread {
                                     System.out.println("LIXEIRA NAO ENCONTRADA - NOVO ADD");
                                     System.out.println("=======>>>>>> LISTA PRINCIPAL " + lista_lixeiras_json.size());
                                 }
-                                 */
+                             */
 
-                                ////////////////////////////////////
-                                ArrayList<Lixeira_Date> list_aux2 = new ArrayList<>();
-                                for (int c = 0; c < lista_2.size(); c++) {
-                                    list_aux2.add(lista_2.get(c));
+                            ////////////////////////////////////
+                            ArrayList<Lixeira_Date> list_aux2 = new ArrayList<>();
+                            for (int c = 0; c < lista_2.size(); c++) {
+                                list_aux2.add(lista_2.get(c));
+                            }
+
+                            for (int count = 0; count < lista_2.size(); count++) {
+
+                                if (lixeira.getId() == lista_2.get(count).getId()) {
+                                    lista_2.remove(count);
+                                    exist = true;
+                                    lista_2.add(count, lixeira);
+                                    System.out.println("<><><>< ESSA CLASSE LIXEIRA EXISTE" + exist);
                                 }
+                            }
 
-                                for (int count = 0; count < lista_2.size(); count++) {
-
-                                    if (lixeira.getId() == lista_2.get(count).getId()) {
-                                        lista_2.remove(count);
-                                        exist = true;
-                                        lista_2.add(count, lixeira);
-                                        System.out.println("<><><>< ESSA CLASSE LIXEIRA EXISTE" + exist);
-                                    }
-                                }
-
-                                if (!exist) {
-                                    lista_2.add(lixeira);
-                                }
-
-                            } else {
-                                objSend.put("msg", "FULL"); //nao pode cadastrar mais lixeiras
+                            if (!exist) {
+                                lista_2.add(lixeira);
                             }
                         }
 
@@ -501,16 +503,16 @@ public class Nuvem extends Thread {
     public static void alterarStatusLixeiras() {
         byte[] msgAEnviar = new byte[1024];
         JSONObject objSend = new JSONObject();
-        
+
         try {
             objSend.put("msg", "STATUS");
         } catch (JSONException ex) {
             System.err.println("NAO FOI POSSIVEL ENVIAR MENSAGEM PARA A LIXEIRA MUDAR O STATUS DE COLETADA");
         }
-        
+
         for (int i = 0; i < lista_2.size(); i++) {
             msgAEnviar = objSend.toString().getBytes();
-            DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, 
+            DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length,
                     lista_2.get(i).getAddress(), lista_2.get(i).getPorta());
             try {
                 servidor_thread_caminhao.send(envelopeAEnviar);
@@ -527,7 +529,7 @@ public class Nuvem extends Thread {
         obj = new JSONObject();
         obj.put("msg", "PORT");
         Random gerador = new Random();
-        obj.put("id", gerador.nextInt(100));
+        obj.put("id", gerador.nextInt(100)); //id para lixeira
         obj.put("porta", port);
         msgAEnviar = obj.toString().getBytes();
 
