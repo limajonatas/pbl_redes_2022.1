@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package lixeira2;
+package view;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import java.awt.Color;
@@ -69,17 +69,24 @@ public class MainViewLixeira extends javax.swing.JFrame {
         this.capacidade_disponivel = (this.capacidade_maxima - this.capacidade_atual);
         this.label_disponivel.setText("ESPAÇO DISPONÍVEL: " + this.capacidade_disponivel);
         this.slider_lixo.setMaximum((int) this.capacidade_disponivel);
-        
-        if(this.capacidade_disponivel==0) {
+
+        if (this.capacidade_disponivel == 0) {
             this.label_msg_addLixo.setText("Não é possível colocar mais lixo. Agora somente após a coleta");
             this.label_msg_addLixo.setForeground(Color.red);
             this.label_msg_addLixo.setVisible(true);
+
+            this.btn_confirmar.setEnabled(false);
+
+        } else {
+            this.btn_confirmar.setEnabled(true);
+            this.label_msg_addLixo.setVisible(false);
         }
     }
-    public void foiColetada(){
+
+    public void foiColetada() {
         this.capacidade_atual = 0.0;
         this.capacidade_disponivel = this.capacidade_maxima;
-        this.label_capacidade_atual.setText(""+0.0);
+        this.label_capacidade_atual.setText("" + 0.0);
     }
 
     public JSONObject getDate() throws JSONException {
@@ -94,11 +101,10 @@ public class MainViewLixeira extends javax.swing.JFrame {
 
         initComponents();
 
-       
         this.setTitle("Lixeira Ativa");
         this.setLocationRelativeTo(null);
         this.label_msg_addLixo.setVisible(false);
-      
+
     }
 
     public void setBloqueio() {
@@ -229,17 +235,28 @@ public class MainViewLixeira extends javax.swing.JFrame {
 
     private void btn_confirmarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_confirmarActionPerformed
         // TODO add your handling code here:
+        if (Double.valueOf(this.slider_lixo.getValue()) > 0) {
+            this.capacidade_disponivel = this.capacidade_maxima - this.capacidade_atual;
+            if (this.capacidade_disponivel >= Double.valueOf(this.slider_lixo.getValue())) {
 
-        this.capacidade_disponivel = this.capacidade_maxima - this.capacidade_atual;
-        if (this.capacidade_disponivel >= Double.valueOf(this.slider_lixo.getValue())) {
+                this.capacidade_atual += Double.valueOf(this.slider_lixo.getValue());
 
-            this.capacidade_atual += Double.valueOf(this.slider_lixo.getValue());
-
-            this.label_msg_addLixo.setText("Você colocou lixo na lixeira!");
-            this.label_msg_addLixo.setForeground(Color.yellow);
-            this.label_msg_addLixo.setVisible(true);
-            this.label_disponivel.setText("ESPAÇO DISPONÍVEL: " + (this.capacidade_maxima - this.capacidade_atual));
-        } 
+                this.label_msg_addLixo.setText("Você colocou lixo na lixeira!");
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainViewLixeira.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                this.label_msg_addLixo.setForeground(Color.yellow);
+                this.label_msg_addLixo.setVisible(true);
+                this.label_disponivel.setText("ESPAÇO DISPONÍVEL: " + (this.capacidade_maxima - this.capacidade_atual));
+            }
+            if (this.capacidade_disponivel == 0) {
+                this.btn_confirmar.setEnabled(false);
+            }
+        }else{
+            this.label_msg_addLixo.setText("altere o valor!");
+        }
 
     }//GEN-LAST:event_btn_confirmarActionPerformed
 

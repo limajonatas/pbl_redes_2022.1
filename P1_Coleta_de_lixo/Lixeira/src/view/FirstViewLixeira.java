@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package lixeira2;
+package view;
 
 import javax.swing.UIManager;
 import com.formdev.flatlaf.*;
@@ -14,7 +14,7 @@ import javax.swing.UnsupportedLookAndFeelException;
  *
  * @author dhoml
  */
-public class OneViewLixeira extends javax.swing.JFrame {
+public class FirstViewLixeira extends javax.swing.JFrame {
 
     private double capacidade_max;
     private int latitude;
@@ -23,7 +23,7 @@ public class OneViewLixeira extends javax.swing.JFrame {
     /**
      * Creates new form Inicializacao
      */
-    public OneViewLixeira() {
+    public FirstViewLixeira() {
         initComponents();
         this.setTitle("Insira os dados necessários");
         this.setLocationRelativeTo(null);
@@ -31,7 +31,7 @@ public class OneViewLixeira extends javax.swing.JFrame {
         //definir maximos da latitude e longitude
         spinner_latitude.setModel(new SpinnerNumberModel(0, -90, 90, 1));
         spinner_longitude.setModel(new SpinnerNumberModel(0, -90, 90, 1));
-        spinner_capacidade_max.setModel(new SpinnerNumberModel(1, 1, 1000, 1));
+        spinner_capacidade_max.setModel(new SpinnerNumberModel(100, 1, 1000, 1));
         
     }
 
@@ -42,6 +42,12 @@ public class OneViewLixeira extends javax.swing.JFrame {
         this.label_latitude.setForeground(Color.YELLOW);
         this.label_position.setVisible(true);
         
+    }
+    public void set_latitude_longitude(int latit, int longit){
+        this.latitude = latit;
+        this.longitude = longit;
+        this.spinner_latitude.setValue(latit);
+        this.spinner_longitude.setValue(longit);
     }
 
     public Double getCapacidadeMaxima() {
@@ -236,7 +242,7 @@ public class OneViewLixeira extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
-            new OneViewLixeira().setVisible(true);
+            new FirstViewLixeira().setVisible(true);
         });
     }
 

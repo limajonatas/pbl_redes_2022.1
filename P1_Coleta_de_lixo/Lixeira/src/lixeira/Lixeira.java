@@ -1,3 +1,5 @@
+package lixeira;
+
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import java.io.IOException;
@@ -6,10 +8,12 @@ import java.net.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import lixeira2.MainViewLixeira;
-import lixeira2.OneViewLixeira;
+import view.MainViewLixeira;
+import view.FirstViewLixeira;
 
 public class Lixeira extends Thread {
 
@@ -19,7 +23,7 @@ public class Lixeira extends Thread {
     private static int port_server;
     private static DatagramSocket cliente;
     private static JSONObject json;
-    private static OneViewLixeira inicializacao;
+    private static FirstViewLixeira inicializacao;
     private static MainViewLixeira mainview;
     private static boolean serverOk;
 
@@ -118,14 +122,14 @@ public class Lixeira extends Thread {
 
                         System.out.println("\n________\nCHEGOU DO SERVIDOR:" + mensagemRecebida + "\n");
                         JSONObject objReceive = new JSONObject(mensagemRecebida);
-                        if (objReceive != null) {
-                            if (objReceive.getString("msg").equals("OK")) {
-                                json.put("connected", true);
-                                json.put("address", objReceive.get("address"));
-                                System.out.println("SERVIDOR OK");
-                                System.out.println(json.toString());
-                            } else if (objReceive.getString("msg").equals("POS")) {
-                                System.out.println("JÁ EXISTE UMA LIXEIRA NESTA POSIÇÃO, FAVOR ALTERE A POSICAO!");
+
+                        if (objReceive.getString("msg").equals("OK")) {
+                            json.put("connected", true);
+                            json.put("address", objReceive.get("address"));
+                            System.out.println("SERVIDOR OK");
+                            System.out.println(json.toString());
+                        } else if (objReceive.getString("msg").equals("POS")) {
+                            /*System.out.println("JÁ EXISTE UMA LIXEIRA NESTA POSIÇÃO, FAVOR ALTERE A POSICAO!");
                                 inicializacao.setChargePosition("EXISTE LIXEIRA NESSA POSIÇÃO!");
                                 inicializacao.setVisible(true);
 
@@ -134,22 +138,24 @@ public class Lixeira extends Thread {
                                     System.out.print("");//garatindo o funcionamento do while.
                                 }
 
-                                inserirdados();
-                            } else if (objReceive.getString("msg").equals("FULL")) {
-                                System.out.println("NÃO PODE CADASTRAR MAIS LIXEIRAS!");
-                                System.exit(0);
-                            } else if (objReceive.getString("msg").equals("PORT")) {//primeira conexao envia a porta
-                                port_server = objReceive.getInt("porta");
-                                json.put("bloqueio", false);
-                                json.put("id", objReceive.getInt("id"));
-                            }else if(objReceive.getString("msg").equals("COLLECTED")){
-                                System.out.println("================== LIXEIRA COLETADA");
-                                json.put("coletada", true);
-                                mainview.foiColetada();
-                            }else if(objReceive.getString("msg").equals("STATUS")){
-                                json.put("coletada", false);
-                                System.out.println("PODE FAZER NOVA COLETA");
-                            }
+                                inserirdados();*/
+                        } else if (objReceive.getString("msg").equals("FULL")) {
+                            System.out.println("NÃO PODE CADASTRAR MAIS LIXEIRAS!");
+                            JOptionPane.showMessageDialog(mainview, "NÃO É POSSÍVEL CADASTRAR MAIS LIXEIRAS!", "There are 3 SmartBin connected", JOptionPane.ERROR_MESSAGE);
+                            System.exit(0);
+                        } else if (objReceive.getString("msg").equals("PORT")) {//primeira conexao envia a porta
+                            port_server = objReceive.getInt("porta");
+                            json.put("bloqueio", false);
+                            json.put("id", objReceive.getInt("id"));
+                        } else if (objReceive.getString("msg").equals("COLLECTED")) {
+                            System.out.println("================== LIXEIRA COLETADA");
+                            json.put("coletada", true);
+                            json.put("capacidade_disponivel", json.get("capacidade_max"));
+                            mainview.foiColetada();
+                            
+                        } else if (objReceive.getString("msg").equals("STATUS")) {
+                            json.put("coletada", false);
+                            System.out.println("PODE FAZER NOVA COLETA");
                         }
 
                         set_get_Date();
@@ -179,6 +185,7 @@ public class Lixeira extends Thread {
 
     public static void main(String args[]) throws JSONException, UnknownHostException {
         try {
+
             port_server = 5000;
             cliente = new DatagramSocket();
 
@@ -192,7 +199,9 @@ public class Lixeira extends Thread {
             }
 
             //JFrame para inserir os dados da lixeira
-            inicializacao = new OneViewLixeira();
+            inicializacao = new FirstViewLixeira();
+            Random gerador = new Random();
+            inicializacao.set_latitude_longitude(gerador.nextInt(-90, 90), gerador.nextInt(-90, 90));
             inicializacao.setVisible(true);
 
             //aguardar o usuario inserir os dados necessarios da lixeira para continuar
