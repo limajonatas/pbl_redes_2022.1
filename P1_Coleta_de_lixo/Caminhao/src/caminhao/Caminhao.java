@@ -1,5 +1,6 @@
 package caminhao;
 
+import view.MainViewCaminhao;
 import com.formdev.flatlaf.FlatDarkLaf;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -87,9 +88,18 @@ public class Caminhao extends Thread {
             @Override
             public void run() {
                 while (true) {
+                    
+                    
+                    
                     byte[] cartaAReceber = new byte[1024];
                     DatagramPacket envelopeAReceber = new DatagramPacket(cartaAReceber, cartaAReceber.length);
                     try {
+                        
+                        if (mainview.isRestart()) {
+                            json.put("restart", true);
+                            mainview.set_restartOFF();
+                        }
+                                                
                         System.out.println("AGUARDANDO CONFIRMAÇÃO DO SERVIDOR...");
                         cliente.receive(envelopeAReceber); //recebe o envelope do Servidor
 
@@ -134,7 +144,7 @@ public class Caminhao extends Thread {
                             //while() espera ate que o botao de reiniciar seja acionado
                             //apos isso enviar mensagem de reistartar
 
-                            mainview.set_restart();
+                            mainview.set_restart();//habilita botao para reiniciar o processo de coleta
 
                             mainview.setProximaLixeiraNull();
 
@@ -176,6 +186,7 @@ public class Caminhao extends Thread {
                     }
 
                     try {
+                        
                         cliente.send(envelopeAEnviar); //aqui envia esse envelope com sua mensagem 
                     } catch (IOException ex) {
                         Logger.getLogger(Caminhao.class.getName()).log(Level.SEVERE, null, ex);
