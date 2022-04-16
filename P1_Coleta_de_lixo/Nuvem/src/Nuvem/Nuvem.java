@@ -24,8 +24,10 @@ public class Nuvem extends Thread {
     private static DatagramSocket servidor_thread_lixeiras;
     private static DatagramSocket servidor_thread_adm;
     private static DatagramSocket servidor_thread_caminhao;
-    private static JSONObject json;
     private static boolean there_is_caminhao;
+    private static JSONObject proxima_lixeira;
+    private static byte[] msgAReceber = new byte[1024];
+    private static byte[] msgAEnviar = new byte[1024];
 
     /**
      * RECEIVE
@@ -36,21 +38,19 @@ public class Nuvem extends Thread {
         System.out.println("Aguardando cliente...");
         while (true) {
             try {
-                byte[] cartaAReceber = new byte[1024];
-                DatagramPacket envelopeAReceber = new DatagramPacket(cartaAReceber, cartaAReceber.length);
+                DatagramPacket envelopeAReceber = new DatagramPacket(msgAReceber, msgAReceber.length);
                 System.out.println("[MAIN_SERVER]: OK MENSAGEM A RECEBER...");
                 servidorUDP.receive(envelopeAReceber);//recebe o envelope do cliente
                 InetAddress ipCliente = envelopeAReceber.getAddress();
                 String textoRecebido = new String(envelopeAReceber.getData());//converte os dados para string
                 System.out.println("DE: " + ipCliente.getHostAddress() + " -> " + textoRecebido);
 
-                byte[] msgAEnviar = new byte[1024];
-
                 try {
                     JSONObject obj = new JSONObject(textoRecebido);
 
                     switch (obj.getInt("tipo")) {
                         case 1:
+                            enviar_porta_cliente(porta_adm, msgAEnviar, obj, ipCliente, envelopeAReceber);
                             System.out.println("____\nÉ O ADM");
                             break;
                         case 2:
@@ -68,7 +68,7 @@ public class Nuvem extends Thread {
                                 JSONObject objSend = new JSONObject();
                                 objSend.put("msg", "FULL");
                                 msgAEnviar = objSend.toString().getBytes();
-                                DatagramPacket envelopeAEnviar= new DatagramPacket(msgAEnviar, msgAEnviar.length, ipCliente, envelopeAReceber.getPort());
+                                DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipCliente, envelopeAReceber.getPort());
                                 servidorUDP.send(envelopeAEnviar);
                             } else {
                                 enviar_porta_cliente(porta_lixeiras, msgAEnviar, obj, ipCliente, envelopeAReceber);
@@ -129,7 +129,6 @@ public class Nuvem extends Thread {
             @Override
             public void run() {
                 while (true) {
-                    byte[] msgAReceber = new byte[1024];
                     DatagramPacket envelopeAReceber = new DatagramPacket(msgAReceber, msgAReceber.length);
                     System.out.println("[SERVER_CAMIHAO]: OK, MENSAGEM A RECEBER...");
                     try {
@@ -145,7 +144,6 @@ public class Nuvem extends Thread {
 
                         System.out.println("DE: " + ipCaminhao.getHostAddress() + " -> " + objReceive.toString());
 
-                        byte[] msgAEnviar = new byte[1024];
                         JSONObject objSend = new JSONObject();
                         /*
                         if (objReceive.getString("msg").equals("requisitar")) {//o caminhao faz uma requisição
@@ -226,7 +224,7 @@ public class Nuvem extends Thread {
                                     msgAEnviar = objSend.toString().getBytes();
                                     DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipCaminhao, envelopeAReceber.getPort());
                                     servidor_thread_caminhao.send(envelopeAEnviar);
-
+                                    continue;
                                 }
 
                                 objSend.put("msg", "PROX"); //envio de uma próxima lixeira
@@ -292,7 +290,6 @@ public class Nuvem extends Thread {
             @Override
             public void run() {
                 while (true) {
-                    byte[] msgAReceber = new byte[1024];
                     DatagramPacket envelopeAReceber = new DatagramPacket(msgAReceber, msgAReceber.length);
                     System.out.println("[SERVER_LIXEIRA]: OK, MENSAGEM A RECEBER...");
                     try {
@@ -310,6 +307,20 @@ public class Nuvem extends Thread {
                     System.out.println("DE: " + ipCliente.getHostAddress() + " -> " + objReceive.toString());
 
                     try {
+
+                        if (objReceive.getString("msg").equals("CONFIRMAR")) {
+                            JSONObject objSend = new JSONObject();
+                            objSend.put("msg", "CONFIRMADO");
+
+                            msgAEnviar = objSend.toString().getBytes();
+
+                            DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipCliente, envelopeAReceber.getPort());
+                            System.out.println(" >>>>>>>> ======== IP " + ipCliente);
+
+                            servidor_thread_lixeiras.send(envelopeAEnviar);
+                            continue;
+                        }
+
                         objReceive.put("address", ipCliente);
 
                         ///////////////////criar instancia lixeira_date///////////////////////
@@ -321,7 +332,6 @@ public class Nuvem extends Thread {
                                 objReceive.getBoolean("bloqueio"), objReceive.getInt("longitude")
                         );
 
-                        byte[] msgAEnviar = new byte[1024];
                         JSONObject objSend = new JSONObject();
                         objSend.put("msg", "OK");
 
@@ -408,6 +418,85 @@ public class Nuvem extends Thread {
         };
         t.start();
 
+    }
+
+    public static void thread_Adm() {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                while (true) {
+                    DatagramPacket envelopeAReceber = new DatagramPacket(msgAReceber, msgAReceber.length);
+                    System.out.println("[SERVER_ADMINISTRADOR]: OK, MENSAGEM A RECEBER...");
+                    try {
+                        servidor_thread_adm.receive(envelopeAReceber);//recebe o envelope do cliente
+                    } catch (IOException ex) {
+                        System.err.println("ERRO A RECEBER MENSAGEM DO ADMINISTRADOR!");
+                    }
+
+                    InetAddress ipAdm = envelopeAReceber.getAddress();
+                    String str = new String(envelopeAReceber.getData());
+                    JSONObject objReceive = null;
+                    try {
+                        objReceive = new JSONObject(str);
+
+                        System.out.println("DE: " + ipAdm.getHostAddress() + " -> " + objReceive.toString());
+
+                        JSONObject objSend;
+
+                        if (objReceive.getString("msg").equals("REQUEST")) {
+                            if (lista_2.isEmpty()) {
+                                objSend = new JSONObject();
+                                objSend.put("msg", "EMPTY");
+                                msgAEnviar = objSend.toString().getBytes();
+                                DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipAdm, envelopeAReceber.getPort());
+                                servidor_thread_adm.send(envelopeAEnviar);
+                            } else {
+                                String quantidade = "quantidade:" + lista_2.size() + ",";
+                                System.out.println("== QUANTIDADE LIXEIRA: " + quantidade);
+                                String arraylixeiras = "lixeiras:[{";
+                                String arrayLixeiras_fechamento = "}]";
+                                String strlixeira = "lixeira";
+                                String strStr = "";
+                                for (int i = 0; i < lista_2.size(); i++) {
+                                    int num = i + 1;
+                                    strStr += strlixeira + num + ":{id:" + lista_2.get(i).getId()
+                                            + ",capacidade_atual:" + lista_2.get(i).getCapacidade_atual()
+                                            + ",bloqueio:" + lista_2.get(i).isBloqueio()
+                                            + ",capacidade_max:" + lista_2.get(i).getCapacidade_max()
+                                            + ",capacidade_disponivel:" + lista_2.get(i).getCapacidade_disponivel()
+                                            + ",latitude:" + lista_2.get(i).getLatitude()
+                                            + ",longitude:" + lista_2.get(i).getLongitude() + "}";
+                                    System.out.println(strStr);
+
+                                    if (num < lista_2.size()) {
+                                        strStr += ",";
+                                    }
+                                }
+                                arraylixeiras += (strStr + arrayLixeiras_fechamento);
+                                String strJson = "{" + quantidade + arraylixeiras + "}";
+                                
+                                objSend = new JSONObject(strJson);
+                                objSend.put("msg", "OK");
+                                System.out.println(objSend.toString());
+                                msgAEnviar = objSend.toString().getBytes();
+                                DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipAdm, envelopeAReceber.getPort());
+                                servidor_thread_adm.send(envelopeAEnviar);
+                            }
+
+                        } else {
+                            objSend = new JSONObject();
+                            objSend.put("msg", "INVALIDO");
+                            msgAEnviar = objSend.toString().getBytes();
+                            DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, ipAdm, envelopeAReceber.getPort());
+                            servidor_thread_adm.send(envelopeAEnviar);
+                        }
+                    } catch (JSONException | IOException ex) {
+                        Logger.getLogger(Nuvem.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        };
+        t.start();
     }
 
     public static int buscarLixeira(int latitude, int longitude) throws JSONException {
@@ -542,9 +631,10 @@ public class Nuvem extends Thread {
 
     public static void main(String[] args) throws IOException, JSONException {
         there_is_caminhao = false;
-        json = new JSONObject();
+        
         try {
             servidorUDP = new DatagramSocket(porta_servidor);
+
             System.out.println("Servidor em execução na porta " + porta_servidor);
             servidor_thread_lixeiras = new DatagramSocket(porta_lixeiras);
             servidor_thread_adm = new DatagramSocket(porta_adm);
@@ -559,6 +649,7 @@ public class Nuvem extends Thread {
         receive.start();
         thread_lixeira(); //criar thread para receber dados das lixeiras
         thread_caminhao();
+        thread_Adm();
         //NuvemSend send = new NuvemSend();
         //send.start();
     }
