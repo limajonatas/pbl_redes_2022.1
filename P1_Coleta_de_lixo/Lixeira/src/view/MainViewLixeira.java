@@ -27,6 +27,7 @@ public class MainViewLixeira extends javax.swing.JFrame {
     private int longitude;
     private boolean connected;
     private double capacidade_disponivel;
+    private boolean atualizado;
 
     /**
      * Creates new form setDados
@@ -50,15 +51,30 @@ public class MainViewLixeira extends javax.swing.JFrame {
 
         this.label_capacidade_atual.setText(Double.toString(this.capacidade_atual));
         this.label_capacidade_maxima.setText(Double.toString(this.capacidade_maxima));
+        this.label_capacidade_disponivel.setText("ESPAÇO DISPONÍVEL: " + Double.toString(this.capacidade_disponivel));
         this.label_latitude.setText(Integer.toString(this.latitude) + "º");
         this.label_longitude.setText(Integer.toString(this.longitude) + "º");
+
         if (this.bloqueio) {
             this.label_bloqueio.setText("YES");
             this.btn_confirmar.setEnabled(false);
         } else {
-            this.label_bloqueio.setText("NO");
-            this.btn_confirmar.setEnabled(true);
+            //this.label_bloqueio.setText("NO");
+            //this.btn_confirmar.setEnabled(true);
+
+            if (this.capacidade_disponivel == 0) {
+                this.label_msg_addLixo.setText("Não é possível colocar mais lixo. Agora somente após a coleta");
+                this.label_msg_addLixo.setForeground(Color.red);
+                this.label_msg_addLixo.setVisible(true);
+
+                this.btn_confirmar.setEnabled(false);
+
+            } else {
+                this.btn_confirmar.setEnabled(true);
+                this.label_msg_addLixo.setVisible(false);
+            }
         }
+
         if (this.connected) {
             this.label_servidor.setText("SERVIDOR CONECTADO!");
             this.label_servidor.setForeground(Color.white);
@@ -67,20 +83,9 @@ public class MainViewLixeira extends javax.swing.JFrame {
             this.label_servidor.setForeground(Color.red);
         }
         this.capacidade_disponivel = (this.capacidade_maxima - this.capacidade_atual);
-        this.label_disponivel.setText("ESPAÇO DISPONÍVEL: " + this.capacidade_disponivel);
+        this.label_capacidade_disponivel.setText("ESPAÇO DISPONÍVEL: " + this.capacidade_disponivel);
         this.slider_lixo.setMaximum((int) this.capacidade_disponivel);
 
-        if (this.capacidade_disponivel == 0) {
-            this.label_msg_addLixo.setText("Não é possível colocar mais lixo. Agora somente após a coleta");
-            this.label_msg_addLixo.setForeground(Color.red);
-            this.label_msg_addLixo.setVisible(true);
-
-            this.btn_confirmar.setEnabled(false);
-
-        } else {
-            this.btn_confirmar.setEnabled(true);
-            this.label_msg_addLixo.setVisible(false);
-        }
     }
 
     public void foiColetada() {
@@ -104,7 +109,21 @@ public class MainViewLixeira extends javax.swing.JFrame {
         this.setTitle("Lixeira Ativa");
         this.setLocationRelativeTo(null);
         this.label_msg_addLixo.setVisible(false);
+        this.atualizado = false;
 
+    }
+
+    public void setStatusServer() {
+        this.label_servidor.setForeground(Color.orange);
+        this.label_servidor.setText("Tentando se conectar ao servidor...");
+    }
+
+    public boolean isAtualizado() {
+        return this.atualizado;
+    }
+
+    public void atualizado() {
+        this.atualizado = false;
     }
 
     public void setBloqueio() {
@@ -126,7 +145,7 @@ public class MainViewLixeira extends javax.swing.JFrame {
         btn_confirmar = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         slider_lixo = new javax.swing.JSlider();
-        label_disponivel = new javax.swing.JLabel();
+        label_capacidade_disponivel = new javax.swing.JLabel();
         label_slider = new javax.swing.JLabel();
         label_capacidade_atual = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
@@ -158,7 +177,7 @@ public class MainViewLixeira extends javax.swing.JFrame {
         label_capacidade_maxima.setText("0.00");
         getContentPane().add(label_capacidade_maxima, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 165, 400, 20));
 
-        btn_confirmar.setText("CONFIRMAR");
+        btn_confirmar.setText("COLOCAR LIXO");
         btn_confirmar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn_confirmarActionPerformed(evt);
@@ -183,10 +202,10 @@ public class MainViewLixeira extends javax.swing.JFrame {
         });
         getContentPane().add(slider_lixo, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 270, 300, 40));
 
-        label_disponivel.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
-        label_disponivel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        label_disponivel.setText("ESPAÇO DISPONÍVEL: ");
-        getContentPane().add(label_disponivel, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 205, 400, 30));
+        label_capacidade_disponivel.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        label_capacidade_disponivel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        label_capacidade_disponivel.setText("ESPAÇO DISPONÍVEL: ");
+        getContentPane().add(label_capacidade_disponivel, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 205, 400, 30));
 
         label_slider.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         label_slider.setText("1");
@@ -241,20 +260,37 @@ public class MainViewLixeira extends javax.swing.JFrame {
 
                 this.capacidade_atual += Double.valueOf(this.slider_lixo.getValue());
 
-                this.label_msg_addLixo.setText("Você colocou lixo na lixeira!");
-                try {
-                    Thread.sleep(300);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(MainViewLixeira.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                this.label_msg_addLixo.setForeground(Color.yellow);
-                this.label_msg_addLixo.setVisible(true);
-                this.label_disponivel.setText("ESPAÇO DISPONÍVEL: " + (this.capacidade_maxima - this.capacidade_atual));
+                this.atualizado = true;
+
+                Thread t = new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            btn_confirmar.setEnabled(false);
+                            label_msg_addLixo.setForeground(Color.yellow);
+                            label_msg_addLixo.setVisible(true);
+                            for (int i = 0; i <= 100; i += 2) {
+                                Thread.sleep(70);
+                                label_msg_addLixo.setText("Adicionando lixo - " + i + "%");
+                            }
+
+                            label_msg_addLixo.setText("Você colocou lixo na lixeira!");
+
+                            Thread.sleep(250);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(MainViewLixeira.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                        btn_confirmar.setEnabled(true);
+                    }
+                };
+
+                t.start();
             }
             if (this.capacidade_disponivel == 0) {
                 this.btn_confirmar.setEnabled(false);
             }
-        }else{
+        } else {
             this.label_msg_addLixo.setText("altere o valor!");
         }
 
@@ -294,8 +330,8 @@ public class MainViewLixeira extends javax.swing.JFrame {
     private javax.swing.JLabel label_background;
     public javax.swing.JLabel label_bloqueio;
     private javax.swing.JLabel label_capacidade_atual;
+    private javax.swing.JLabel label_capacidade_disponivel;
     private javax.swing.JLabel label_capacidade_maxima;
-    private javax.swing.JLabel label_disponivel;
     private javax.swing.JLabel label_latitude;
     private javax.swing.JLabel label_longitude;
     private javax.swing.JLabel label_msg_addLixo;

@@ -19,6 +19,7 @@ public class FirstViewLixeira extends javax.swing.JFrame {
     private double capacidade_max;
     private int latitude;
     private int longitude;
+   
 
     /**
      * Creates new form Inicializacao
