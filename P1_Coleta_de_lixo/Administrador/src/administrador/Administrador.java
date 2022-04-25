@@ -13,6 +13,10 @@ import javax.swing.UnsupportedLookAndFeelException;
 import lixeira_date.Lixeira_Date;
 import view.MainViewAdministrador;
 
+/**
+ * CLASSE DO ADMINISTRADOR
+ * @author JONATAS DE JESUS LIMA
+ */
 public class Administrador extends Thread {
 
     private static final String ipCliente = "";

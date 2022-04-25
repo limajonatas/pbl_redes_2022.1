@@ -18,8 +18,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- *
- * @author jonatas
+ * CLASSE DA INTERFACE DO ADMINISTRADOR.
+ * @author JONATAS DE JESUS LIMA
  */
 public class MainViewAdministrador extends javax.swing.JFrame {
 
