@@ -1,4 +1,4 @@
-package lixeira;
+package lixeira_date;
 
 import java.net.InetAddress;
 

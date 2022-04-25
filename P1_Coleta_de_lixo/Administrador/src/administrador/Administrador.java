@@ -10,10 +10,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import lixeira_date.Lixeira_Date;
 import view.MainViewAdministrador;
 
 public class Administrador extends Thread {
-    
+
     private static final String ipCliente = "";
     private static int porta;
     private static int main_port_server;
@@ -21,42 +22,85 @@ public class Administrador extends Thread {
     private static DatagramSocket adm_socket;
     private static JSONObject json;
     private static boolean serverOk;
-    private static byte[] cartaAEnviar = new byte[1024];
+    private static byte[] cartaAEnviar = new byte[2048];
     private static InetAddress ip;
     private static MainViewAdministrador mainview;
     private static Date dataHoraAtual;
+    private static boolean atualizar;
 
     /**
      * ENVIAR DADOS PARA O SERVIDOR
      */
     @Override
     public void run() {
-        
+
         while (true) {
             try {
                 if (!json.getBoolean("connected")) {//PRIMEIRA CONEXAO
-                    
+
                     cartaAEnviar = (json.toString()).getBytes(); //converte a mensagem String para array de bytes
 
                     System.out.println("__________\n" + json.toString());
 
                     //adicionar a mensagem à um "envelope", que inclui o tamanho, ip e a porta de destino
                     DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ip, port_server);
-                    
+
                     adm_socket.send(envelopeAEnviar); //aqui envia esse envelope com sua mensagem 
                     Thread.sleep(2000);
                 } else {
-                    if (mainview.isAtualizado()) {
-                        json.put("msg", "REQUEST");
-                        
-                        cartaAEnviar = (json.toString()).getBytes();
-                        DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ip, port_server);
-                        adm_socket.send(envelopeAEnviar);
-                        Thread.sleep(5000);
+                    Thread.sleep(500);
+                    if (atualizar) {
+                        atualizar = false;
+                        if (mainview.lixeira_foi_alterada()) {
+
+                            atualizar = true;
+
+                            json.put("msg", "CHANGE");
+                            JSONObject obj = new JSONObject(mainview.lixeira_alterada().toString());
+                            json.put("id_lixeira", obj.getInt("id"));
+                            json.put("bloqueio_lixeira", obj.getBoolean("bloqueio"));
+                            cartaAEnviar = (json.toString()).getBytes();
+                            DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ip, port_server);
+
+                            adm_socket.send(envelopeAEnviar);
+                            System.out.println("LIXEIRA ALTERADA === " + json.toString());
+                        } else {
+                            json.put("msg", "REQUEST");
+
+                            cartaAEnviar = (json.toString()).getBytes();
+                            DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ip, port_server);
+                            adm_socket.send(envelopeAEnviar);
+                        }
+                    } else if (mainview != null) {
+                        if (mainview.isAtualizado()) {
+                            if (mainview.lixeira_foi_alterada()) {
+
+                                atualizar = true;
+
+                                json.put("msg", "CHANGE");
+                                JSONObject obj = new JSONObject(mainview.lixeira_alterada().toString());
+                                json.put("id_lixeira", obj.getInt("id"));
+                                json.put("bloqueio_lixeira", obj.getBoolean("bloqueio"));
+                                cartaAEnviar = (json.toString()).getBytes();
+                                DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ip, port_server);
+                                adm_socket.send(envelopeAEnviar);
+
+                                System.out.println("LIXEIRA ALTERADA === " + json.toString());
+                            } else {
+
+                                json.put("msg", "REQUEST");
+
+                                cartaAEnviar = (json.toString()).getBytes();
+                                DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ip, port_server);
+                                adm_socket.send(envelopeAEnviar);
+                            }
+
+                        }
+
                     }
-                    
+
                 }
-                
+
             } catch (IOException ex) {
                 Logger.getLogger(Administrador.class.getName()).log(Level.SEVERE, null, ex);
             } catch (JSONException ex) {
@@ -64,7 +108,7 @@ public class Administrador extends Thread {
             } catch (InterruptedException ex) {
                 Logger.getLogger(Administrador.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+
         }
     }
 
@@ -76,10 +120,10 @@ public class Administrador extends Thread {
         json.put("tipo", 1); //por enquanto para identificar que é uma lixeira- nº3
         json.put("connected", false);
         json.put("porta", adm_socket.getLocalPort());
-        
+
     }
-    
-    public static void startupThreads() {
+
+    private static void startupThreads() {
         Thread send = new Administrador();
         send.start();
         receiveThread();
@@ -93,7 +137,7 @@ public class Administrador extends Thread {
             @Override
             public void run() {
                 while (true) {
-                    
+
                     byte[] cartaAReceber = new byte[1024];
                     DatagramPacket envelopeAReceber = new DatagramPacket(cartaAReceber, cartaAReceber.length);
                     try {
@@ -101,10 +145,10 @@ public class Administrador extends Thread {
                         adm_socket.receive(envelopeAReceber); //recebe o envelope do Servidor
                         //converte os dados do envelope para string
                         String mensagemRecebida = new String(envelopeAReceber.getData());
-                        
+
                         System.out.println("\n________\nCHEGOU DO SERVIDOR:" + mensagemRecebida + "\n");
                         JSONObject objReceive = new JSONObject(mensagemRecebida);
-                        
+
                         if (objReceive.getString("msg").equals("EMPTY")) {//nao há lixeiras
                             mainview.nao_ha_lixeiras();
                             dataHoraAtual = new Date();
@@ -114,7 +158,33 @@ public class Administrador extends Thread {
                             dataHoraAtual = new Date();
                             String hora = new SimpleDateFormat("HH:mm:ss").format(dataHoraAtual);
                             mainview.atualizado(hora);
-                           /*FALTA DESTRICHAR A QUESTAO DAS INFORMAÇÕES DA LIXEIRA E MANDAR PARA A INTERFACCE*/
+
+                            int quantidade_lixeiras = objReceive.getInt("quantidade");
+                            JSONArray array_json_lixeiras = objReceive.getJSONArray("lixeiras");
+                            for (int i = 0; i < quantidade_lixeiras; i++) { //adicionar as lixeira
+                                int lix = i + 1;
+                                JSONObject obj = array_json_lixeiras.getJSONObject(0).getJSONObject("lixeira" + lix);
+                                Lixeira_Date lixeira = new Lixeira_Date(true,
+                                        null, 0, false, obj.getInt("latitude"), obj.getInt("id"),
+                                        3, obj.getDouble("capacidade_disponivel"),
+                                        obj.getDouble("capacidade_atual"), obj.getDouble("capacidade_max"),
+                                        obj.getBoolean("bloqueio"), obj.getInt("longitude")
+                                );
+                                mainview.inserir_lixeiras(lixeira);
+                            }
+                            try {
+                                if (objReceive.get("proxima_lixeira") != null) { //caminhao está ativo
+                                    System.out.println(objReceive.getJSONObject("proxima_lixeira").getInt("latitude"));
+                                    mainview.proxima_lixeira(objReceive.getJSONObject("proxima_lixeira").getInt("id"),
+                                            objReceive.getJSONObject("proxima_lixeira").getInt("latitude"),
+                                            objReceive.getJSONObject("proxima_lixeira").getInt("longitude"));
+                                }
+                            } catch (JSONException ex) {
+                                System.err.println("NAO EXISTE PROXIMA LIXEIRA PARA COLETA");
+                            }
+
+
+                            /*FALTA DESTRICHAR A QUESTAO DAS INFORMAÇÕES DA LIXEIRA E MANDAR PARA A INTERFACCE*/
                         } else if (objReceive.getString("msg").equals("PORT")) {
                             json.put("connected", true);
                             port_server = objReceive.getInt("porta");
@@ -122,8 +192,8 @@ public class Administrador extends Thread {
                         }
 
                         //set_get_Date();
-                       // Thread.sleep(1000);
-                    } catch (IOException | JSONException  ex) {
+                        // Thread.sleep(1000);
+                    } catch (IOException | JSONException ex) {
                         Logger.getLogger(Administrador.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
@@ -146,6 +216,7 @@ public class Administrador extends Thread {
     }*/
     public static void main(String args[]) throws JSONException, UnknownHostException {
         try {
+            atualizar = false;
             ip = InetAddress.getByName("");
             port_server = 5000;
             adm_socket = new DatagramSocket();
@@ -156,22 +227,20 @@ public class Administrador extends Thread {
             } catch (UnsupportedLookAndFeelException ex) {
                 System.err.println("Falha ao iniciar o LaF");
             }
-            
+
             createJson();
             startupThreads();
             mainview = new MainViewAdministrador();
             mainview.setVisible(true);
-            /*
+
             Thread t = new Thread() {
                 @Override
                 public void run() {
                     while (true) {
                         try {
-                            if (json.getBoolean("connected")) {
-                                Thread.sleep(15000);//15s
-                                json.put("connected", false);
-                            }
-                        } catch (JSONException | InterruptedException ex) {
+                            Thread.sleep(20000);//10s
+                            atualizar = true;
+                        } catch (InterruptedException ex) {
                             Logger.getLogger(Administrador.class.getName()).log(Level.SEVERE, null, ex);
                         }
 
@@ -179,11 +248,11 @@ public class Administrador extends Thread {
                 }
 
             };
-            t.start();*/
-            
+            t.start();
+
         } catch (SocketException e) {
             System.err.println("NAO FOI POSSIVEL CRIAR O SOCKET LIXEIRA!");
         }
-        
+
     }
 }
