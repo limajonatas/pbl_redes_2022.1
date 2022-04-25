@@ -131,11 +131,6 @@ public class MainViewLixeira extends javax.swing.JFrame {
         this.label_msg_addLixo.setVisible(false);
     }
     
-    public void foiColetada() {
-        this.capacidade_atual = 0.0;
-        this.capacidade_disponivel = this.capacidade_maxima;
-        this.label_capacidade_atual.setText("" + 0.0);
-    }
 
     public double obter_capacidade_atual() {
         return this.capacidade_atual;

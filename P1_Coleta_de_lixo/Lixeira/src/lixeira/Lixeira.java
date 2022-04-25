@@ -61,7 +61,7 @@ public class Lixeira extends Thread {
                     if (mainview.deve_atualizar() || recadastrado_servidor) { //enviar dados apenas depois de adicionar lixo.
                         recadastrado_servidor = false;
                         Thread.sleep(1500);//1,5 segundo
-                        
+
                         json.put("capacidade_atual", mainview.obter_capacidade_atual());
                         json.put("capacidade_disponivel", mainview.obter_capacidade_disponivel());
                         json.put("bloqueio", mainview.obter_status_bloqueio());
@@ -179,8 +179,12 @@ public class Lixeira extends Thread {
                             json.put("connected", true);
                             mainview.set_label_foi_coletada();
                             json.put("coletada", true);
-                            json.put("capacidade_disponivel", json.get("capacidade_max"));
-                            mainview.foiColetada();
+                            double cap_atual = json.getDouble("capacidade_atual");
+                            double qtd_lixo = objReceive.getDouble("quantidade_lixo_coletado");
+                            double new_cap_atual = cap_atual - qtd_lixo;
+                            json.put("capacidade_atual", new_cap_atual);
+                            json.put("capacidade_disponivel", (json.getDouble("capacidade_max") - new_cap_atual));
+                          
                             manda_dados_interface();
                         } else if (objReceive.getString("msg").equals("STATUS")) {
                             json.put("connected", true);
@@ -193,8 +197,6 @@ public class Lixeira extends Thread {
                             manda_dados_interface();
                             recadastrado_servidor = true;
                         }
-
-                        
 
                         Thread.sleep(1000);
                     } catch (IOException | JSONException | InterruptedException ex) {
@@ -253,10 +255,9 @@ public class Lixeira extends Thread {
             while (inicializacao.isVisible()) {
                 System.out.print("");//garatindo o funcionamento do while.
             }
-            ip_servidor=inicializacao.obter_ip_servidor();
-            port_server=inicializacao.obter_porta_servidor();
-            
-            
+            ip_servidor = inicializacao.obter_ip_servidor();
+            port_server = inicializacao.obter_porta_servidor();
+
             inserirdados();//insere os dados ao json
 
             mainview = new MainViewLixeira();
@@ -265,7 +266,7 @@ public class Lixeira extends Thread {
                     json.getInt("latitude"), json.getInt("longitude"), json.getBoolean("connected"), json.getDouble("capacidade_disponivel"));
 
             mainview.setVisible(true);
-            
+
             startupThreads(); //inicializa a tentativa de conexao com o servidor
 
             Thread t = new Thread() {
@@ -279,7 +280,7 @@ public class Lixeira extends Thread {
                                 Thread.sleep(1000);//1s
                                 json.put("connected", false);
                                 mainview.servidor_desconectado();
-                                
+
                             }
                         } catch (JSONException | InterruptedException ex) {
                             Logger.getLogger(Lixeira.class.getName()).log(Level.SEVERE, null, ex);
