@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package Lixeiras;
+package Lixeira_date;
 
 import java.net.InetAddress;
 import java.text.DecimalFormat;
@@ -88,19 +88,24 @@ public class NewClass1 {
         JSONArray arr = obj.getJSONArray("lixeiras");
 
         int kk = obj.getInt("quantidade");
-        
+
         for (int i = 0; i < kk; i++) {
-            int li=i+1;
-            JSONObject obb =  arr.getJSONObject(0).getJSONObject("lixeira"+li);
+            int li = i + 1;
+
+            JSONObject obb = arr.getJSONObject(0).getJSONObject("lixeira" + li);
             arr.getJSONObject(0).put("lixeira3", new JSONObject("{id: 772, capacidade_maxima: 5848.0}"));
-            System.out.println("ASSIM: "+arr.toString());
+            System.out.println("ASSIM: " + arr.toString());
             System.out.println(obb.toString());
             System.out.println("CAPACIDADE:" + obb.getDouble("capacidade_maxima"));
         }
-         JSONObject obb =  arr.getJSONObject(0).getJSONObject("lixeira3");
-           
-            System.out.println(obb.toString());
-            System.out.println("CAPACIDADE:" + obb.getDouble("capacidade_maxima"));
+        JSONObject obb = arr.getJSONObject(0).getJSONObject("lixeira3");
 
+        System.out.println(obb.toString());
+        System.out.println("CAPACIDADE:" + obb.getDouble("capacidade_maxima"));
+
+        String sttr = " 5";
+        String str2 = sttr.replaceAll(" ", "");
+        System.out.println(sttr);
+        System.out.println("STR SEM ESPACÇO "+str2);
     }
 }
