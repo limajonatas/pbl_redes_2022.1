@@ -43,6 +43,10 @@ public class Caminhao extends Thread {
         while (true) {
             cartaAEnviar = new byte[2048];
             try {
+                if(mainview.caminhao_foi_descarregado()){
+                    mainview.set_date_truck(0.0, json.getDouble("capacidade_max"));
+                
+                }
                 if (!json.getBoolean("connected")) {//se o servidor estiver desconectado, até conectar
 
                     cartaAEnviar = (json.toString()).getBytes(); //converte a mensagem String para array de bytes

@@ -29,13 +29,14 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     private boolean lixeira_anterior_coletada;
     private static int id_lixeira_coletada;
     private static double quantidade_lixo_coletado;
+    private static boolean descarregado;
 
     /**
      * CONSTRUTOR DA CLASSE
      */
     public MainViewCaminhao() {
         initComponents();
-
+        this.descarregado=false;
         this.setTitle("Caminhao");
         this.setLocationRelativeTo(null);
         this.spinner_capacidade_maxima.setForeground(Color.yellow);
@@ -72,6 +73,10 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         spinner_capacidade_maxima.setModel(new SpinnerNumberModel(1000, 1000, 10000, 100)); //min 1000
 
     }
+    
+    public boolean caminhao_foi_descarregado(){
+        return this.descarregado;
+    }
 
     /**
      * se o botao restart foi acionado
@@ -91,7 +96,6 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         this.label_aviso_sup.setVisible(true);
         this.btn_restart.setVisible(true);
         this.btn_coletar.setEnabled(false);
-        // this.btn_restart.setEnabled(true);
 
     }
 
@@ -154,7 +158,10 @@ public class MainViewCaminhao extends javax.swing.JFrame {
             } else {
                 if (this.proxima_lixeira_json.getDouble("capacidade_lixeira") > (this.capacidade_maxima - this.capacidade_atual)) {
                     this.label_aviso.setText("Pouca quantidade disponível no caminhão - descarregue na estação");
-                    this.btn_coletar.setEnabled(true);
+                    this.label_aviso.setVisible(true);
+                    this.btn_descarregar.setVisible(true);
+                    this.btn_descarregar.setEnabled(true);
+                    this.btn_coletar.setEnabled(false);
                 } else {
                     this.label_aviso.setVisible(false);
                     if (this.lixeira_anterior_coletada) { //se a lixeira anterior ja foi coletada
@@ -247,7 +254,6 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         jLabel10 = new javax.swing.JLabel();
         progress_coletando = new javax.swing.JProgressBar();
         btn_confirma_cap_max = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
         btn_restart = new javax.swing.JButton();
         btn_descarregar = new javax.swing.JButton();
         label_aviso = new javax.swing.JLabel();
@@ -258,6 +264,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         label_info_server = new javax.swing.JLabel();
         label_aviso_sup = new javax.swing.JLabel();
+        label_icon_truck = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(440, 300));
@@ -341,9 +348,6 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         });
         getContentPane().add(btn_confirma_cap_max, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 20, -1, -1));
 
-        jLabel1.setIcon(new javax.swing.ImageIcon("C:\\Users\\dhoml\\Documents\\NetBeansProjects\\pbl_redes_2022.1\\P1_Coleta_de_lixo\\Caminhao\\images\\coleta.png")); // NOI18N
-        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 0, -1, -1));
-
         btn_restart.setText("Restart");
         btn_restart.setEnabled(false);
         btn_restart.addActionListener(new java.awt.event.ActionListener() {
@@ -404,9 +408,13 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         label_info_server.setText("Aguardando mensagem chegar no servidor...");
         getContentPane().add(label_info_server, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 310, 440, -1));
 
+        label_aviso_sup.setForeground(new java.awt.Color(255, 255, 0));
         label_aviso_sup.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         label_aviso_sup.setText("---");
         getContentPane().add(label_aviso_sup, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 440, -1));
+
+        label_icon_truck.setIcon(new javax.swing.ImageIcon("C:\\Users\\dhoml\\Documents\\NetBeansProjects\\pbl_redes_2022.1\\P1_Coleta_de_lixo\\Caminhao\\images\\coleta.png")); // NOI18N
+        getContentPane().add(label_icon_truck, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 0, -1, -1));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -512,8 +520,6 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         this.label_capacidade_disponivel.setText("" + a);
         this.capacidade_maxima = a;
         this.capacidade_disponivel = a;
-
-
     }//GEN-LAST:event_btn_confirma_cap_maxActionPerformed
 
     private void btn_restartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_restartActionPerformed
@@ -530,11 +536,11 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     }//GEN-LAST:event_label_add_cap_maximaAncestorAdded
 
     private void btn_descarregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_descarregarActionPerformed
+        this.descarregado=true;
+        
         this.label_aviso.setVisible(false);
 
         this.btn_descarregar.setVisible(false);
-        //this.label_capacidade_atual.setText("" + this.capacidade_atual);
-        //this.label_capacidade_disponivel.setText("" + this.capacidade_disponivel);
 
         Thread t = new Thread() {
             @Override
@@ -553,7 +559,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
                         label_aviso_descarregar.setText("Descarregando... " + i + "%");
                         label_capacidade_atual.setText(String.valueOf((capAtual - (div * i))).format("%.2f", (capAtual - (div * j))));
 
-                        //label_capacidade_disponivel.setText(String.valueOf((capDisp + (div * i))).format("%.2f", (capDisp + (div * j))));
+                        ///label_capacidade_disponivel.setText(String.valueOf((capDisp - (div * i))).format("%.2f", (capDisp - (div * j))));
                     }
                     Thread.sleep(70);
                     label_aviso_descarregar.setVisible(false);
@@ -601,7 +607,6 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     private javax.swing.JButton btn_confirma_cap_max;
     private javax.swing.JButton btn_descarregar;
     private javax.swing.JButton btn_restart;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel7;
@@ -614,6 +619,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     private javax.swing.JLabel label_capacidade_atual;
     private javax.swing.JLabel label_capacidade_disponivel;
     private javax.swing.JLabel label_capacidade_maxima;
+    private javax.swing.JLabel label_icon_truck;
     private javax.swing.JLabel label_info_server;
     private javax.swing.JLabel label_lixeira_atual;
     private javax.swing.JLabel label_minimo_capacidade_caminhao;
