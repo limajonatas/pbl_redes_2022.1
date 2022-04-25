@@ -37,7 +37,7 @@ public class Nuvem extends Thread {
             try {
                 msgAReceber = new byte[2048];
                 DatagramPacket envelopeAReceber = new DatagramPacket(msgAReceber, msgAReceber.length);
-                System.out.println("[MAIN_SERVER]: OK MENSAGEM A RECEBER...");
+                System.out.println(">>>>[MAIN_SERVER]: OK MENSAGEM A RECEBER...");
                 servidorUDP.receive(envelopeAReceber);//recebe o envelope do cliente
                 InetAddress ipCliente = envelopeAReceber.getAddress();
                 String textoRecebido = new String(envelopeAReceber.getData());//converte os dados para string
@@ -162,7 +162,7 @@ public class Nuvem extends Thread {
 
                                 try {
                                     servidor_thread_caminhao.send(envelopeAEnviar);
-                                    System.out.println(">>[SERVER_CAMIHAO] ENVIADO PARA CAMINHÃO \"NÃO HÁ LIXEIRAS\"");
+                                    System.out.println(">>[SERVER_CAMINHAO] ENVIADO PARA CAMINHÃO \"NÃO HÁ LIXEIRAS\"");
                                 } catch (IOException ex) {
                                     System.out.println(">>[SERVER-CAMINHÃO]: ERRO AO ENVIAR RESPOSTA AO CAMINHÃO [THERE AREN'T BIN]");
                                 }
@@ -518,7 +518,7 @@ public class Nuvem extends Thread {
 
         if (pos != -1) {
             Lixeira_Date obj = lista_lixeiras.get(pos);
-            obj.setCapacidade_atual(obj.getCapacidade_atual() - (objReceive.getDouble("quantidade_lixo_coletado")));
+            //obj.setCapacidade_atual(obj.getCapacidade_atual() - (objReceive.getDouble("quantidade_lixo_coletado")));
             obj.setColetada(true);
             lista_lixeiras.remove(pos);
             lista_lixeiras.add(obj);
@@ -526,7 +526,7 @@ public class Nuvem extends Thread {
 
             JSONObject objSend = new JSONObject();
             objSend.put("msg", "COLLECTED");
-            objSend.put("atualiza_capacidade", obj.getCapacidade_atual() - (objReceive.getDouble("quantidade_lixo_coletado")));
+            objSend.put("quantidade_lixo_coletado", objReceive.getDouble("quantidade_lixo_coletado"));
             msgAEnviar = objSend.toString().getBytes();
             DatagramPacket envelopeAEnviar = new DatagramPacket(msgAEnviar, msgAEnviar.length, obj.getAddress(), obj.getPorta());
 
