@@ -15,6 +15,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import org.json.*;
 
 /**
+ * CLASSE DO CAMINHAO
  *
  * @author JONATAS DE JESU LIMA
  */
@@ -53,7 +54,6 @@ public class Caminhao extends Thread {
 
                     cliente.send(envelopeAEnviar); //aqui envia esse envelope com sua mensagem 
 
-                    set_get_Date();
                     Thread.sleep(3000);
                 } else {
                     try {
@@ -100,16 +100,9 @@ public class Caminhao extends Thread {
         }
     }
 
-    public static void set_get_Date() throws JSONException {
-        if (mainview != null) {//garantir que a instancia da tela principal nao seja utilizada antes de ser criada fora da thread
-            //pega informação sobre a capacidade atual
-            json.put("capacidade_atual", mainview.getDate().getDouble("capacidade_atual"));
-
-            //mainview.set_date(json.getDouble("capacidade_atual"), json.getBoolean("connected"));
-        }
-
-    }
-
+    /**
+     * INICIALIZA AS THREADS.
+     */
     public static void startupThreads() {
         Thread send = new Caminhao();
         send.start();
@@ -153,18 +146,7 @@ public class Caminhao extends Thread {
                             System.out.println(">>>>[SERVER]: PROXIMA LIXEIRA: " + obj_receive.toString());
 
                             mainview.manda_proxima_lixeira(obj_receive.toString()); //atualiza interface
-                            //Thread.sleep(2000);
-                            /*
-                            if (mainview.fez_alguma_coletada()) {//foi coletado?
-                                System.out.println("=============== CAMINHAO COLETOU!");
-                                json.put("lixeira_coletada", true);
-                                json.put("id_lixeira", obj_receive.getInt("id_lixeira"));
-                                json.put("latitude_lixeira", obj_receive.getInt("latitude_lixeira"));
-                                json.put("longitude_lixeira", obj_receive.getInt("longitude_lixeira"));
-                            }*/
 
-                            //no final enviar o json - alterar msg para: "COLLECTED"
-                            //add ao json a latitude e longitude da lixeira.
                         } else if (obj_receive.getString("msg").equals("EXIST")) {
                             json.put("connected", true);
                             System.out.println("JÁ EXISTE UM CAMINHAO CONNECTADO!");
@@ -173,20 +155,6 @@ public class Caminhao extends Thread {
                             json.put("connected", true);
                             System.out.println("NÃO EXISTE LIXEIRAS!");
                         } else if (obj_receive.getString("msg").equals("ALLCOLLECTED")) {
-                            //json.put("lixeira_coletada", false);
-                            ///json.put("connected", true);
-                            //while() espera ate que o botao de reiniciar seja acionado
-                            //apos isso enviar mensagem de reistartar
-
-                            //mainview.ativar_btn_reiniciar();//habilita botao para reiniciar o processo de coleta
-                            //mainview.setProximaLixeiraNull();
-                            /*
-                            while (mainview.btn_reiniciar_clicado() == false) {
-                                System.out.print("");
-                            }
-                            json.put("restart", true);
-                            mainview.set_restartOFF();
-                             */
                             json.put("connected", true);
                             if (!todas_lixeiras_coletadas) {
                                 mainview.ativar_btn_reiniciar();
@@ -211,8 +179,6 @@ public class Caminhao extends Thread {
                             json.put("capacidade_disponivel", obj_receive.getDouble("capacidade_disponivel_caminhao"));
                             mainview.set_date_truck(obj_receive.getDouble("capacidade_atual_caminhao"), obj_receive.getDouble("capacidade_disponivel_caminhao"));
                         }
-
-                        //set_get_Date();
                     } catch (IOException | JSONException ex) {
                         Logger.getLogger(Caminhao.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -237,6 +203,12 @@ public class Caminhao extends Thread {
         //json.put("lixeira_coletada", false); //lixeira coletada
     }
 
+    /**
+     * INSERE OS DADOS RESTANTE NO ARQUIVO JSON DO CAMINHAO
+     *
+     * @throws JSONException
+     * @throws UnknownHostException
+     */
     public static void inserirdados() throws JSONException, UnknownHostException {
         json.put("capacidade_max", mainview.getCapacidadeMaxima());
         json.put("capacidade_disponivel", json.getDouble("capacidade_max"));
@@ -246,6 +218,8 @@ public class Caminhao extends Thread {
     }
 
     /**
+     * MAIN Instancia o socket, interface e as threads.
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args) throws InterruptedException, UnknownHostException {
