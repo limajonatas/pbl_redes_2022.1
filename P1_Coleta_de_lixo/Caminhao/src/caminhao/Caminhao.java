@@ -123,11 +123,7 @@ public class Caminhao extends Thread {
                     DatagramPacket envelopeAReceber = new DatagramPacket(cartaAReceber, cartaAReceber.length);
 
                     try {
-                        /*
-                        if (mainview.btn_reiniciar_clicado()) {
-                            json.put("restart", true);
-                            mainview.set_restartOFF();
-                        }*/
+                        
 
                         System.out.println("AGUARDANDO RESPOSTA DO SERVIDOR...");
                         cliente.receive(envelopeAReceber); //recebe o envelope do Servidor
@@ -145,7 +141,7 @@ public class Caminhao extends Thread {
 
                             System.out.println(">>>>[SERVER]: PROXIMA LIXEIRA: " + obj_receive.toString());
 
-                            mainview.manda_proxima_lixeira(obj_receive.toString()); //atualiza interface
+                            mainview.recebe_proxima_lixeira(obj_receive.toString()); //atualiza interface
 
                         } else if (obj_receive.getString("msg").equals("EXIST")) {
                             json.put("connected", true);

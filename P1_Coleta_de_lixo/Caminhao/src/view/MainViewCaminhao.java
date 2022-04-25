@@ -12,6 +12,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
+ * CLASE INTERFACE CAMINHAO
  *
  * @author JONATAS DE JESUS LIMA
  */
@@ -59,7 +60,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
 
         this.coletado = false;
         this.restart = false;
-        //variavel usada para ativar o botao de coleta no método "manda_proxima_lixeira"
+        //variavel usada para ativar o botao de coleta no método "recebe_proxima_lixeira"
         lixeira_anterior_coletada = true;
         this.btn_descarregar.setVisible(false);
         this.btn_restart.setVisible(false);
@@ -72,32 +73,39 @@ public class MainViewCaminhao extends javax.swing.JFrame {
 
     }
 
-    public void setProximaLixeiraNull() {
-        this.proxima_lixeira_json = null;
-        this.label_proxima_lixeira.setText("N/D");
-    }
-
-    public boolean btn_reiniciar_clicado() { //se o botao restart foi acionado
+    /**
+     * se o botao restart foi acionado
+     *
+     * @return
+     */
+    public boolean btn_reiniciar_clicado() {
         return this.restart;
     }
 
+    /**
+     * ATIVAR O BOTAO DE REINICIAR O PROCESSO DE COLETA
+     */
     public void ativar_btn_reiniciar() {
-        //if (!this.restart) {
-            this.label_aviso_sup.setText("Para iniciar um novo processo de coleta, clique em \'Restart\' ");
-            this.label_aviso_sup.setVisible(true);
-            this.btn_restart.setVisible(true);
-            this.btn_coletar.setEnabled(false);
-            // this.btn_restart.setEnabled(true);
-        //}
+
+        this.label_aviso_sup.setText("Para iniciar um novo processo de coleta, clique em \'Restart\' ");
+        this.label_aviso_sup.setVisible(true);
+        this.btn_restart.setVisible(true);
+        this.btn_coletar.setEnabled(false);
+        // this.btn_restart.setEnabled(true);
+
     }
 
+    /**
+     * BOTAO DESLIGAR RESTART
+     */
     public void set_restartOFF() {
-        //this.btn_restart.setVisible(false);
-        //this.btn_restart.setEnabled(false);
         this.restart = false;
         this.btn_restart.setVisible(false);
     }
 
+    /**
+     * SE A LIXEIRA FOIR COLETADA
+     */
     public void lixeira_foi_coletada() {
         this.lixeira_anterior_coletada = true;
     }
@@ -118,7 +126,13 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         this.label_info_server.setVisible(false);
     }
 
-    public void manda_proxima_lixeira(String lix) throws JSONException {
+    /**
+     * RECEBE A PROXIMA LIXEIRA - MOSTRAR NA INTERFACE
+     *
+     * @param lix lixeira
+     * @throws JSONException
+     */
+    public void recebe_proxima_lixeira(String lix) throws JSONException {
         JSONObject aux = new JSONObject(lix);
 
         if (aux.getInt("id_lixeira") == this.id_lixeira_coletada) {
@@ -152,46 +166,63 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         }
     }
 
+    /**
+     * SE FEZ ALGUMA COLETA
+     *
+     * @return true se houve uma coleta anterior, false se nao.
+     * @throws JSONException
+     */
     public boolean fez_alguma_coletada() throws JSONException {//se fez a coleta
         boolean col = false;
         if (this.coletado) {//se foi coletado
             col = true;
             this.coletado = false;
-            // this.proxima_lixeira_json = null;
         }
         return col;
     }
 
+    /**
+     * obter o id da lixeira coletada
+     * @return 
+     */
     public int get_id_lixeira_coletada() {
         return this.id_lixeira_coletada;
     }
 
+    /**
+     * obter a quantidade de lixo que foi coletado da lixeira.
+     * @return 
+     */
     public double get_qtd_lixo_coletado() {
         return this.quantidade_lixo_coletado;
     }
 
+    /**
+     * LIMPAR DADOS DA LIXEIRA COLETADA.
+     */
     public void limpar_dados_lixeira_coletada() {
         this.id_lixeira_coletada = -1;
         this.quantidade_lixo_coletado = -1;
     }
 
+    /**
+     * MUDA O STATUS DO CAMINHAO - SE EXISTE OUTRO CAMINHAO CADASTRADO NO SERVIDOR.
+     */
     public void set_status_server_existCaminhao() {
         this.label_add_cap_maxima.setText("Já existe um caminhão!");
         this.label_add_cap_maxima.setVisible(true);
         this.label_add_cap_maxima.setForeground(Color.red);
     }
 
+    /**
+     * obter a capacidade maxima do caminhao
+     * @return a capacidade maxima do caminhao
+     */
     public double getCapacidadeMaxima() {
         return capacidade_maxima;
     }
 
-    public JSONObject getDate() throws JSONException {
-        JSONObject json = new JSONObject();
-        json.put("capacidade_atual", this.capacidade_atual);
-
-        return json;
-    }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -390,7 +421,6 @@ public class MainViewCaminhao extends javax.swing.JFrame {
                 if (value <= (this.capacidade_maxima - this.capacidade_atual)) {
 
                     this.coletado = true;
-                    //this.capacidade_atual += value;
 
                     //thread para o componente "processo carregando"
                     new Thread() {
@@ -416,15 +446,15 @@ public class MainViewCaminhao extends javax.swing.JFrame {
                     this.lixeira_anterior_coletada = false;
 
                     //altera na interface os dados
-                    //this.label_capacidade_atual.setText("" + this.capacidade_atual);
+                   
                     this.lixeira_atual_json = new JSONObject(this.proxima_lixeira_json.toString());
-                    //this.lixeira_atual_json.put("capacidade_lixeira", 0.0);
+                    
                     this.label_lixeira_atual.setText("ID: " + this.proxima_lixeira_json.getInt("id_lixeira") + " LAT: "
                             + this.proxima_lixeira_json.getInt("latitude_lixeira")
                             + "º LON: " + this.proxima_lixeira_json.getInt("longitude_lixeira"));
 
                     this.label_proxima_lixeira.setText("N/D");
-                    //this.label_capacidade_disponivel.setText("" + (this.capacidade_maxima - this.capacidade_atual));
+                  
 
                     //adiciono ao json da lixeira coletada
                     System.out.println("PEGUEI LIXEIRA COLETADA");
@@ -454,6 +484,10 @@ public class MainViewCaminhao extends javax.swing.JFrame {
 
     }//GEN-LAST:event_btn_coletarActionPerformed
 
+    /**
+     * EVENTO AO CLICAR O BOTAO DE CONFIRMAR A CAPACIDADE MAXIMA
+     * @param evt 
+     */
     private void btn_confirma_cap_maxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_confirma_cap_maxActionPerformed
 
         int i = (int) this.spinner_capacidade_maxima.getValue();
