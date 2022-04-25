@@ -7,6 +7,10 @@ package view;
 import javax.swing.UIManager;
 import com.formdev.flatlaf.*;
 import java.awt.Color;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -19,7 +23,8 @@ public class FirstViewLixeira extends javax.swing.JFrame {
     private double capacidade_max;
     private int latitude;
     private int longitude;
-   
+    private int porta_servidor;
+    private InetAddress ip_servidor;
 
     /**
      * Creates new form Inicializacao
@@ -33,7 +38,22 @@ public class FirstViewLixeira extends javax.swing.JFrame {
         spinner_latitude.setModel(new SpinnerNumberModel(0, -90, 90, 1));
         spinner_longitude.setModel(new SpinnerNumberModel(0, -90, 90, 1));
         spinner_capacidade_max.setModel(new SpinnerNumberModel(100, 1, 1000, 1));
-        
+
+    }
+
+    public void recebe_ip_e_porta_servidor(InetAddress ip, int porta) {
+        this.ip_servidor = ip;
+        this.porta_servidor = porta;
+        this.text_field_ip.setText("" + this.ip_servidor.getHostAddress());
+        this.text_field_porta.setText("" + this.porta_servidor);
+    }
+
+    public InetAddress obter_ip_servidor() {
+        return this.ip_servidor;
+    }
+
+    public int obter_porta_servidor() {
+        return this.porta_servidor;
     }
 
     public void setChargePosition(String title) {
@@ -42,9 +62,10 @@ public class FirstViewLixeira extends javax.swing.JFrame {
         this.label_longitude.setForeground(Color.yellow);
         this.label_latitude.setForeground(Color.YELLOW);
         this.label_position.setVisible(true);
-        
+
     }
-    public void set_latitude_longitude(int latit, int longit){
+
+    public void set_latitude_longitude(int latit, int longit) {
         this.latitude = latit;
         this.longitude = longit;
         this.spinner_latitude.setValue(latit);
@@ -86,6 +107,10 @@ public class FirstViewLixeira extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         label_position = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        text_field_ip = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        text_field_porta = new javax.swing.JTextField();
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -145,6 +170,19 @@ public class FirstViewLixeira extends javax.swing.JFrame {
 
         jLabel3.setText("(1 a 1000m3)");
 
+        jLabel4.setText("IP SERVIDOR:");
+
+        text_field_ip.setText("172.0.0.1");
+        text_field_ip.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                text_field_ipActionPerformed(evt);
+            }
+        });
+
+        jLabel5.setText("PORTA:");
+
+        text_field_porta.setText("5000");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -152,13 +190,6 @@ public class FirstViewLixeira extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(19, 19, 19)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(text_latitude2, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel3)
-                        .addGap(18, 18, 18)
-                        .addComponent(spinner_capacidade_max, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(25, 25, 25))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -169,19 +200,34 @@ public class FirstViewLixeira extends javax.swing.JFrame {
                                 .addComponent(label_longitude)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jLabel2)))
-                        .addGap(90, 90, 90)
+                        .addGap(102, 102, 102)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(spinner_longitude, javax.swing.GroupLayout.DEFAULT_SIZE, 74, Short.MAX_VALUE)
+                            .addComponent(spinner_longitude)
                             .addComponent(spinner_latitude))
-                        .addGap(24, 24, 24))))
+                        .addGap(24, 24, 24))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel4)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(text_field_ip, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel5))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(button_confirma, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(text_latitude2, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(jLabel3))))
+                        .addGap(13, 13, 13)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(spinner_capacidade_max, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(text_field_porta, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE))
+                        .addGap(25, 25, 25))))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(label_position, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addGap(120, 120, 120)
-                .addComponent(button_confirma, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -204,8 +250,14 @@ public class FirstViewLixeira extends javax.swing.JFrame {
                     .addComponent(spinner_capacidade_max, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3))
                 .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(text_field_ip, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5)
+                    .addComponent(text_field_porta, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
                 .addComponent(button_confirma, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(17, Short.MAX_VALUE))
+                .addGap(19, 19, 19))
         );
 
         pack();
@@ -216,11 +268,23 @@ public class FirstViewLixeira extends javax.swing.JFrame {
         this.capacidade_max = (double) i;
         this.latitude = (int) spinner_latitude.getValue();
         this.longitude = (int) spinner_longitude.getValue();
-        System.out.println("CAPACIDADE MAXIMA: " + this.capacidade_max
-                + "m3 \nLATITUDE: " + this.latitude + "º\nLONGITUDE: " + this.longitude + "º");
-        //System.exit(0);
+
+        try {
+            this.ip_servidor = InetAddress.getByName(this.text_field_ip.getText());
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(FirstViewLixeira.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        this.porta_servidor = Integer.parseInt(this.text_field_porta.getText());
         this.setVisible(false);
+
+        System.out.println("CAPACIDADE MAXIMA: " + this.capacidade_max
+                + "m3 - LATITUDE: " + this.latitude + "º - LONGITUDE: " + this.longitude + "º - PORTA SERVIDOR: "
+                + this.porta_servidor+" - IP SERVIDOR: "+ip_servidor.getHostAddress());
     }//GEN-LAST:event_button_confirmaActionPerformed
+
+    private void text_field_ipActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_text_field_ipActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_text_field_ipActionPerformed
 
     /**
      * s
@@ -252,6 +316,8 @@ public class FirstViewLixeira extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JLayeredPane jLayeredPane1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSplitPane jSplitPane1;
@@ -261,6 +327,8 @@ public class FirstViewLixeira extends javax.swing.JFrame {
     private javax.swing.JSpinner spinner_capacidade_max;
     private javax.swing.JSpinner spinner_latitude;
     private javax.swing.JSpinner spinner_longitude;
+    private javax.swing.JTextField text_field_ip;
+    private javax.swing.JTextField text_field_porta;
     private javax.swing.JLabel text_latitude2;
     // End of variables declaration//GEN-END:variables
 }

@@ -8,6 +8,7 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import java.awt.Color;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.json.JSONArray;
@@ -19,7 +20,7 @@ import org.json.JSONObject;
  * @author dhoml
  */
 public class MainViewLixeira extends javax.swing.JFrame {
-
+    
     private double capacidade_maxima;
     private double capacidade_atual;
     private boolean bloqueio;
@@ -30,17 +31,32 @@ public class MainViewLixeira extends javax.swing.JFrame {
     private boolean atualizado;
 
     /**
-     * Creates new form setDados
-     *
-     * @param cap_max
-     * @param cap_atual
-     * @param bloq
-     * @param lat
-     * @param longi
+     * CONSTRUTOR DA CLASSE.
      */
-    public void setDados(double cap_max, double cap_atual, boolean bloq,
-            int lat, int longi, boolean connected, double cap_disponivel) {
+    public MainViewLixeira() {
+        
+        initComponents();
+        
+        this.setTitle("Lixeira Ativa");
+        this.setLocationRelativeTo(null);
+        this.label_msg_addLixo.setVisible(false);
+        this.atualizado = false;
+        this.capacidade_atual = 0;
+        
+    }
 
+    /**
+     * ADICIONA OS DADOS DA LIXEIRA à INTERFACE
+     *
+     * @param cap_max capacidade máxima
+     * @param cap_atual capacidade atual
+     * @param bloq bloqueio
+     * @param lat latitude
+     * @param longi longitude
+     */
+    public void recebe_dados_para_interface(double cap_max, double cap_atual, boolean bloq,
+            int lat, int longi, boolean connected, double cap_disponivel) {
+        
         this.capacidade_atual = cap_atual;
         this.capacidade_maxima = cap_max;
         this.bloqueio = bloq;
@@ -48,84 +64,106 @@ public class MainViewLixeira extends javax.swing.JFrame {
         this.longitude = longi;
         this.connected = connected;
         this.capacidade_disponivel = cap_disponivel;
-
+        
         this.label_capacidade_atual.setText(Double.toString(this.capacidade_atual));
         this.label_capacidade_maxima.setText(Double.toString(this.capacidade_maxima));
         this.label_capacidade_disponivel.setText("ESPAÇO DISPONÍVEL: " + Double.toString(this.capacidade_disponivel));
         this.label_latitude.setText(Integer.toString(this.latitude) + "º");
         this.label_longitude.setText(Integer.toString(this.longitude) + "º");
-
+        
         if (this.bloqueio) {
             this.label_bloqueio.setText("YES");
-            this.btn_confirmar.setEnabled(false);
+            this.btn_colocar_lixo.setEnabled(false);
         } else {
-            //this.label_bloqueio.setText("NO");
-            //this.btn_confirmar.setEnabled(true);
+            this.label_bloqueio.setText("NO");
+            //this.btn_colocar_lixo.setEnabled(true);
 
             if (this.capacidade_disponivel == 0) {
                 this.label_msg_addLixo.setText("Não é possível colocar mais lixo. Agora somente após a coleta");
                 this.label_msg_addLixo.setForeground(Color.red);
                 this.label_msg_addLixo.setVisible(true);
-
-                this.btn_confirmar.setEnabled(false);
-
+                
+                this.btn_colocar_lixo.setEnabled(false);
+                
             } else {
-                this.btn_confirmar.setEnabled(true);
+                this.btn_colocar_lixo.setEnabled(true);
                 this.label_msg_addLixo.setVisible(false);
             }
         }
-
+        
         if (this.connected) {
             this.label_servidor.setText("SERVIDOR CONECTADO!");
             this.label_servidor.setForeground(Color.white);
+            this.btn_colocar_lixo.setEnabled(true);
         } else {
             this.label_servidor.setText("Servidor desconectado!");
             this.label_servidor.setForeground(Color.red);
+            this.btn_colocar_lixo.setEnabled(false);
         }
         this.capacidade_disponivel = (this.capacidade_maxima - this.capacidade_atual);
         this.label_capacidade_disponivel.setText("ESPAÇO DISPONÍVEL: " + this.capacidade_disponivel);
         this.slider_lixo.setMaximum((int) this.capacidade_disponivel);
-
+        
+    }
+    
+    public void recebe_id(int id) {
+        label_id.setText("" + id);
+    }
+    
+    public void set_label_foi_coletada() {
+        this.label_msg_addLixo.setText("LIXEIRA COLETADA COM SUCESSO!");
+    }
+    
+    public void set_label_bloqueada() {
+        this.label_msg_addLixo.setText("LIXEIRA BLOQUEADA PELO ADMINISTRADOR");
+    }
+    
+    public void set_label_desbloqueada() {
+        this.label_msg_addLixo.setText("LIXEIRA DESBLOQUEADA PELO ADMINISTRADOR!");
     }
 
+    public void servidor_desconectado() {
+        this.label_servidor.setText("Servidor Desconectado!");
+        this.label_servidor.setForeground(Color.red);
+        this.label_servidor.setVisible(true);
+        this.btn_colocar_lixo.setEnabled(false);//btn de colocar lixo.
+        this.label_bloqueio.setText("YES");
+        this.label_msg_addLixo.setVisible(false);
+    }
+    
     public void foiColetada() {
         this.capacidade_atual = 0.0;
         this.capacidade_disponivel = this.capacidade_maxima;
         this.label_capacidade_atual.setText("" + 0.0);
     }
 
-    public JSONObject getDate() throws JSONException {
-        JSONObject json = new JSONObject();
-        json.put("capacidade_atual", this.capacidade_atual);
-        json.put("capacidade_disponivel", this.capacidade_disponivel);
-
-        return json;
+    public double obter_capacidade_atual() {
+        return this.capacidade_atual;
     }
 
-    public MainViewLixeira() {
-
-        initComponents();
-
-        this.setTitle("Lixeira Ativa");
-        this.setLocationRelativeTo(null);
-        this.label_msg_addLixo.setVisible(false);
-        this.atualizado = false;
-
+    public double obter_capacidade_disponivel() {
+        return this.capacidade_disponivel;
     }
 
-    public void setStatusServer() {
+    public boolean obter_status_bloqueio() {
+        return this.bloqueio;
+    }
+    
+    public void tentando_conectar_servidor() {
         this.label_servidor.setForeground(Color.orange);
         this.label_servidor.setText("Tentando se conectar ao servidor...");
+        this.btn_colocar_lixo.setEnabled(false);
+        this.label_msg_addLixo.setVisible(false);
     }
-
-    public boolean isAtualizado() {
+    
+    public boolean deve_atualizar() {
         return this.atualizado;
     }
-
+    
     public void atualizado() {
         this.atualizado = false;
     }
-
+    
     public void setBloqueio() {
         this.bloqueio = !this.bloqueio;
     }
@@ -142,7 +180,7 @@ public class MainViewLixeira extends javax.swing.JFrame {
         label_servidor = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         label_capacidade_maxima = new javax.swing.JLabel();
-        btn_confirmar = new javax.swing.JButton();
+        btn_colocar_lixo = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         slider_lixo = new javax.swing.JSlider();
         label_capacidade_disponivel = new javax.swing.JLabel();
@@ -156,6 +194,8 @@ public class MainViewLixeira extends javax.swing.JFrame {
         label_bloqueio = new javax.swing.JLabel();
         label_msg_addLixo = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        label_id = new javax.swing.JLabel();
         label_background = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -177,13 +217,13 @@ public class MainViewLixeira extends javax.swing.JFrame {
         label_capacidade_maxima.setText("0.00");
         getContentPane().add(label_capacidade_maxima, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 165, 400, 20));
 
-        btn_confirmar.setText("COLOCAR LIXO");
-        btn_confirmar.addActionListener(new java.awt.event.ActionListener() {
+        btn_colocar_lixo.setText("COLOCAR LIXO");
+        btn_colocar_lixo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_confirmarActionPerformed(evt);
+                btn_colocar_lixoActionPerformed(evt);
             }
         });
-        getContentPane().add(btn_confirmar, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 340, 120, 30));
+        getContentPane().add(btn_colocar_lixo, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 340, 120, 30));
 
         jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel5.setText("Adicionar lixo:");
@@ -218,22 +258,22 @@ public class MainViewLixeira extends javax.swing.JFrame {
         getContentPane().add(label_capacidade_atual, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 90, 400, 30));
 
         jLabel8.setText("Latitude: ");
-        getContentPane().add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 380, -1, -1));
+        getContentPane().add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 380, -1, -1));
 
         label_latitude.setText("0º");
-        getContentPane().add(label_latitude, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 380, 30, -1));
+        getContentPane().add(label_latitude, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 380, 30, -1));
 
         jLabel10.setText("Longitude:");
-        getContentPane().add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 380, -1, -1));
+        getContentPane().add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 380, -1, -1));
 
         label_longitude.setText("0º");
-        getContentPane().add(label_longitude, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 380, 30, -1));
+        getContentPane().add(label_longitude, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 380, 30, -1));
 
         jLabel12.setText("Blocked:");
-        getContentPane().add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 380, -1, -1));
+        getContentPane().add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 380, -1, -1));
 
         label_bloqueio.setText("NO");
-        getContentPane().add(label_bloqueio, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 380, 40, -1));
+        getContentPane().add(label_bloqueio, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 380, 40, -1));
 
         label_msg_addLixo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         label_msg_addLixo.setText("mensagem aqui apos confirmar");
@@ -245,6 +285,12 @@ public class MainViewLixeira extends javax.swing.JFrame {
         jLabel9.setText("CAPACIDADE MÁXIMA");
         getContentPane().add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 140, 400, 30));
 
+        jLabel1.setText("ID:");
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, -1, -1));
+
+        label_id.setText("N/D");
+        getContentPane().add(label_id, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 380, -1, -1));
+
         label_background.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/rect28903.png"))); // NOI18N
         label_background.setOpaque(isOpaque());
         getContentPane().add(label_background, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
@@ -252,58 +298,61 @@ public class MainViewLixeira extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btn_confirmarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_confirmarActionPerformed
+    private void btn_colocar_lixoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_colocar_lixoActionPerformed
         // TODO add your handling code here:
+        if (bloqueio) {
+            JOptionPane.showMessageDialog(null, "LIXEIRA BLOQUEADA!");
+        }
         if (Double.valueOf(this.slider_lixo.getValue()) > 0) {
             this.capacidade_disponivel = this.capacidade_maxima - this.capacidade_atual;
             if (this.capacidade_disponivel >= Double.valueOf(this.slider_lixo.getValue())) {
-
+                
                 this.capacidade_atual += Double.valueOf(this.slider_lixo.getValue());
-
+                this.capacidade_disponivel = this.capacidade_maxima - this.capacidade_atual;
                 this.atualizado = true;
-
+                
                 Thread t = new Thread() {
                     @Override
                     public void run() {
                         try {
-                            btn_confirmar.setEnabled(false);
+                            btn_colocar_lixo.setEnabled(false);
                             label_msg_addLixo.setForeground(Color.yellow);
                             label_msg_addLixo.setVisible(true);
                             for (int i = 0; i <= 100; i += 2) {
                                 Thread.sleep(70);
                                 label_msg_addLixo.setText("Adicionando lixo - " + i + "%");
                             }
-
+                            
                             label_msg_addLixo.setText("Você colocou lixo na lixeira!");
-
+                            
                             Thread.sleep(250);
                         } catch (InterruptedException ex) {
                             Logger.getLogger(MainViewLixeira.class.getName()).log(Level.SEVERE, null, ex);
                         }
-
-                        btn_confirmar.setEnabled(true);
+                        
+                        btn_colocar_lixo.setEnabled(true);
                     }
                 };
-
+                
                 t.start();
             }
             if (this.capacidade_disponivel == 0) {
-                this.btn_confirmar.setEnabled(false);
+                this.btn_colocar_lixo.setEnabled(false);
             }
         } else {
             this.label_msg_addLixo.setText("altere o valor!");
         }
 
-    }//GEN-LAST:event_btn_confirmarActionPerformed
+    }//GEN-LAST:event_btn_colocar_lixoActionPerformed
 
     private void slider_lixoStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_slider_lixoStateChanged
         // TODO add your handling code here:
 
         label_slider.setText(String.valueOf(slider_lixo.getValue()));
     }//GEN-LAST:event_slider_lixoStateChanged
-
+    
     public static void main(String[] args) {
-
+        
         try {
             UIManager.setLookAndFeel(new FlatDarkLaf());
         } catch (UnsupportedLookAndFeelException ex) {
@@ -320,7 +369,8 @@ public class MainViewLixeira extends javax.swing.JFrame {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btn_confirmar;
+    private javax.swing.JButton btn_colocar_lixo;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel3;
@@ -332,6 +382,7 @@ public class MainViewLixeira extends javax.swing.JFrame {
     private javax.swing.JLabel label_capacidade_atual;
     private javax.swing.JLabel label_capacidade_disponivel;
     private javax.swing.JLabel label_capacidade_maxima;
+    private javax.swing.JLabel label_id;
     private javax.swing.JLabel label_latitude;
     private javax.swing.JLabel label_longitude;
     private javax.swing.JLabel label_msg_addLixo;
