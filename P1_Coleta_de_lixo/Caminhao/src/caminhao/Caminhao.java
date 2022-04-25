@@ -16,7 +16,7 @@ import org.json.*;
 
 /**
  *
- * @author jonatas
+ * @author JONATAS DE JESU LIMA
  */
 public class Caminhao extends Thread {
 
@@ -28,6 +28,10 @@ public class Caminhao extends Thread {
     private static MainViewCaminhao mainview;
     private static boolean serverOk;
     private static JSONObject lixeiras;
+    private static byte[] cartaAEnviar;
+    private static byte[] cartaAReceber;
+    private static boolean btn_reiniciar_ligado;
+    private static boolean todas_lixeiras_coletadas;
 
     /**
      * ENVIAR DADOS PARA O SERVIDOR
@@ -36,24 +40,58 @@ public class Caminhao extends Thread {
     @Override
     public void run() {
         while (true) {
+            cartaAEnviar = new byte[2048];
             try {
                 if (!json.getBoolean("connected")) {//se o servidor estiver desconectado, até conectar
-                    //CÓDIGO PARA ENVIAR UMA MENSAGEM PARA O SERVIDOR
-                    byte[] cartaAEnviar = new byte[1024]; //criando um array de byte (necessário)
 
                     cartaAEnviar = (json.toString()).getBytes(); //converte a mensagem String para array de bytes
 
-                    String a = json.toString();
-                    System.out.println("__________\n" + a);
+                    System.out.println("DATE TRUCK: " + json.toString());
 
-                    //InetAddress ip = InetAddress.getByName(""); //atribuindo o ip
                     //adicionar a mensagem à um "envelope", que inclui o tamanho, ip e a porta de destino
                     DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ((InetAddress) json.get("address")), port_server);
 
                     cliente.send(envelopeAEnviar); //aqui envia esse envelope com sua mensagem 
 
                     set_get_Date();
-                    Thread.sleep(1000);
+                    Thread.sleep(3000);
+                } else {
+                    try {
+                        if (mainview.fez_alguma_coletada()) {
+                            JSONObject objSend = new JSONObject();
+
+                            objSend.put("msg", "BIN_COLLECTED");
+                            objSend.put("id_lixeira_coletada", mainview.get_id_lixeira_coletada());
+                            objSend.put("quantidade_lixo_coletado", mainview.get_qtd_lixo_coletado());
+                            objSend.put("capacidade_atual_caminhao", json.getDouble("capacidade_atual"));
+                            objSend.put("capacidade_disponivel_caminhao", json.getDouble("capacidade_atual"));
+                            objSend.put("capacidade_maxima_caminhao", json.getDouble("capacidade_max"));
+
+                            cartaAEnviar = (objSend.toString()).getBytes(); //converte a mensagem String para array de bytes
+                            DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ((InetAddress) json.get("address")), port_server);
+                            cliente.send(envelopeAEnviar);
+                            mainview.lixeira_foi_coletada();
+                        } else if (mainview.btn_reiniciar_clicado()) {
+                            JSONObject objSend = new JSONObject();
+
+                            objSend.put("msg", "RESTART");
+
+                            cartaAEnviar = (objSend.toString()).getBytes(); //converte a mensagem String para array de bytes
+                            DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ((InetAddress) json.get("address")), port_server);
+                            cliente.send(envelopeAEnviar);
+                            btn_reiniciar_ligado = false;
+                        } else if (!btn_reiniciar_ligado) {//quando o processo pode ser reiniciado o caminhão nao faz requisições
+                            json.put("msg", "REQUIRE");
+
+                            cartaAEnviar = (json.toString()).getBytes(); //converte a mensagem String para array de bytes
+
+                            DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ((InetAddress) json.get("address")), port_server);
+                            cliente.send(envelopeAEnviar);
+                        }
+                        Thread.sleep(7000);
+                    } catch (JSONException ex) {
+                        Logger.getLogger(Caminhao.class.getName()).log(Level.SEVERE, null, ex);
+                    }
 
                 }
             } catch (IOException | JSONException | InterruptedException ex) {
@@ -67,7 +105,7 @@ public class Caminhao extends Thread {
             //pega informação sobre a capacidade atual
             json.put("capacidade_atual", mainview.getDate().getDouble("capacidade_atual"));
 
-            mainview.setDados(json.getDouble("capacidade_atual"), json.getBoolean("connected"));
+            //mainview.set_date(json.getDouble("capacidade_atual"), json.getBoolean("connected"));
         }
 
     }
@@ -88,46 +126,42 @@ public class Caminhao extends Thread {
             @Override
             public void run() {
                 while (true) {
-                    
-                    
-                    
-                    byte[] cartaAReceber = new byte[1024];
+                    cartaAReceber = new byte[2048];
                     DatagramPacket envelopeAReceber = new DatagramPacket(cartaAReceber, cartaAReceber.length);
+
                     try {
-                        
-                        if (mainview.isRestart()) {
+                        /*
+                        if (mainview.btn_reiniciar_clicado()) {
                             json.put("restart", true);
                             mainview.set_restartOFF();
-                        }
-                                                
-                        System.out.println("AGUARDANDO CONFIRMAÇÃO DO SERVIDOR...");
+                        }*/
+
+                        System.out.println("AGUARDANDO RESPOSTA DO SERVIDOR...");
                         cliente.receive(envelopeAReceber); //recebe o envelope do Servidor
 
                         String mensagemRecebida = new String(envelopeAReceber.getData()); //converte os dados do envelope para string
 
-                        System.out.println("\n________\nCHEGOU DO SERVIDOR:" + mensagemRecebida + "\n");
+                        System.out.println(">>>>[SERVIDOR]: " + mensagemRecebida + "\n");
                         JSONObject obj_receive = new JSONObject(mensagemRecebida);
 
-                        json.put("restart", false);
-
+                        //json.put("restart", false);
                         if (obj_receive.getString("msg").equals("PROX")) { //se há lixeira //RECEBE INFO DA PROX LIXEIRA
 
                             json.put("connected", true);
                             json.put("lixeira_coletada", false);
 
-                            System.out.println("SERVIDOR ENVIOU INFO SOBRE NOVA LIXEIRA");
-                            System.out.println("_____________________________________");
-                            System.out.println(obj_receive.toString());
-                            System.out.println("_____________________________________");
-                            mainview.set_prox_lixeira(obj_receive.toString()); //atualiza interface
-                            Thread.sleep(1000);
-                            if (mainview.isCollected()) {//foi coletado?
+                            System.out.println(">>>>[SERVER]: PROXIMA LIXEIRA: " + obj_receive.toString());
+
+                            mainview.manda_proxima_lixeira(obj_receive.toString()); //atualiza interface
+                            //Thread.sleep(2000);
+                            /*
+                            if (mainview.fez_alguma_coletada()) {//foi coletado?
                                 System.out.println("=============== CAMINHAO COLETOU!");
                                 json.put("lixeira_coletada", true);
-                                json.put("id_lixeira", obj_receive.getInt("id"));
+                                json.put("id_lixeira", obj_receive.getInt("id_lixeira"));
                                 json.put("latitude_lixeira", obj_receive.getInt("latitude_lixeira"));
                                 json.put("longitude_lixeira", obj_receive.getInt("longitude_lixeira"));
-                            }
+                            }*/
 
                             //no final enviar o json - alterar msg para: "COLLECTED"
                             //add ao json a latitude e longitude da lixeira.
@@ -139,56 +173,47 @@ public class Caminhao extends Thread {
                             json.put("connected", true);
                             System.out.println("NÃO EXISTE LIXEIRAS!");
                         } else if (obj_receive.getString("msg").equals("ALLCOLLECTED")) {
-                            json.put("lixeira_coletada", false);
-                            json.put("connected", true);
+                            //json.put("lixeira_coletada", false);
+                            ///json.put("connected", true);
                             //while() espera ate que o botao de reiniciar seja acionado
                             //apos isso enviar mensagem de reistartar
 
-                            mainview.set_restart();//habilita botao para reiniciar o processo de coleta
-
-                            mainview.setProximaLixeiraNull();
+                            //mainview.ativar_btn_reiniciar();//habilita botao para reiniciar o processo de coleta
+                            //mainview.setProximaLixeiraNull();
+                            /*
+                            while (mainview.btn_reiniciar_clicado() == false) {
+                                System.out.print("");
+                            }
+                            json.put("restart", true);
+                            mainview.set_restartOFF();
+                             */
+                            json.put("connected", true);
+                            if (!todas_lixeiras_coletadas) {
+                                mainview.ativar_btn_reiniciar();
+                                btn_reiniciar_ligado = true;
+                                todas_lixeiras_coletadas = true;
+                            }
 
                         } else if (obj_receive.getString("msg").equals("PORT")) {//primeira conexao envia a porta
                             json.put("connected", true);
                             port_server = obj_receive.getInt("porta");
-                            System.out.println("SERVIDOR CONECTADO AO CAMINHAO " + json.getBoolean("connected"));
-                            System.out.println("MUDEI A PORTA PARA " + port_server);
+                            System.out.println("<<[CAMINHÃO]:PORTA DO SERVIDOR ALTERADA COM SUCESSO!");
                         } else if (obj_receive.getString("msg").equals("REINICIADO")) {
                             json.put("connected", true);
-                            json.put("restart", false);
+                            // json.put("restart", false);
                             mainview.set_restartOFF();
+                            btn_reiniciar_ligado = false;
+                            todas_lixeiras_coletadas = false;
+
+                        } else if (obj_receive.getString("msg").equals("COLETA_OK")) {
+                            mainview.limpar_dados_lixeira_coletada();
+                            json.put("capacidade_atual", obj_receive.getDouble("capacidade_atual_caminhao"));
+                            json.put("capacidade_disponivel", obj_receive.getDouble("capacidade_disponivel_caminhao"));
+                            mainview.set_date_truck(obj_receive.getDouble("capacidade_atual_caminhao"), obj_receive.getDouble("capacidade_disponivel_caminhao"));
                         }
 
-                        set_get_Date();
-
-                    } catch (IOException | JSONException | InterruptedException ex) {
-                        Logger.getLogger(Caminhao.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-
-                    ///VERIFICAR SE HÁ LIXEIRA/PROXIMA LIXEIRA-SOLICITANDO AO SERVIDOR
-                    byte[] cartaAEnviar = new byte[1024]; //criando um array de byte (necessário)
-                    DatagramPacket envelopeAEnviar = null;
-                    try {
-
-                        if (mainview.isRestart()) {
-                            json.put("restart", true);
-                        }
-
-                        json.put("msg", "requisitar");
-
-                        cartaAEnviar = (json.toString()).getBytes(); //converte a mensagem String para array de bytes
-
-                        //InetAddress ip = InetAddress.getByName(""); //atribuindo o ip
-                        //adicionar a mensagem à um "envelope", que inclui o tamanho, ip e a porta de destino
-                        envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ((InetAddress) json.get("address")), port_server);
-                    } catch (JSONException ex) {
-                        Logger.getLogger(Caminhao.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-
-                    try {
-                        
-                        cliente.send(envelopeAEnviar); //aqui envia esse envelope com sua mensagem 
-                    } catch (IOException ex) {
+                        //set_get_Date();
+                    } catch (IOException | JSONException ex) {
                         Logger.getLogger(Caminhao.class.getName()).log(Level.SEVERE, null, ex);
                     }
 
@@ -206,18 +231,18 @@ public class Caminhao extends Thread {
         json = new JSONObject();
         json.put("tipo", 2); //por enquanto para identificar que é um caminhao- nº3
         json.put("capacidade_atual", 0);
+
         json.put("connected", false); //conectado ao servidor
-        json.put("requisitar", false);
-        json.put("restart", false);// reiniciar novo process de coleta
-        json.put("lixeira_coletada", false); //lixeira coletada
+        //json.put("restart", false);// reiniciar novo process de coleta
+        //json.put("lixeira_coletada", false); //lixeira coletada
     }
 
     public static void inserirdados() throws JSONException, UnknownHostException {
         json.put("capacidade_max", mainview.getCapacidadeMaxima());
+        json.put("capacidade_disponivel", json.getDouble("capacidade_max"));
         json.put("address", InetAddress.getByName(""));
         json.put("porta", cliente.getLocalPort());
-
-        System.out.println("DADOS CAMINHAO: " + json.toString());//afim de verificar se está tudo ok
+        System.out.println("ARQUIVO JSON CRIADO: " + json.toString());
     }
 
     /**
@@ -225,6 +250,8 @@ public class Caminhao extends Thread {
      */
     public static void main(String[] args) throws InterruptedException, UnknownHostException {
         try {
+            todas_lixeiras_coletadas = false;
+            btn_reiniciar_ligado = false;
             port_server = 5000;
             cliente = new DatagramSocket();
 
@@ -239,10 +266,10 @@ public class Caminhao extends Thread {
 
                 mainview = new MainViewCaminhao();
                 while (mainview.getCapacidadeMaxima() == 0) {
-                    Thread.sleep(500);
-                    System.out.println("AINDA É ZERO");
+                    Thread.sleep(1000);
+                    System.out.println("A CAPACIDADE AINDA É ZERO");
                 }
-                System.out.println("OK capacidade->> " + mainview.getCapacidadeMaxima());
+
                 inserirdados();
                 startupThreads(); //inicializa as thres (de envio e recebimento)
 

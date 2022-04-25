@@ -13,20 +13,24 @@ import org.json.JSONObject;
 
 /**
  *
- * @author jonatas
+ * @author JONATAS DE JESUS LIMA
  */
 public class MainViewCaminhao extends javax.swing.JFrame {
 
     private double capacidade_maxima;
     private double capacidade_atual;
     private double capacidade_disponivel;
-    private JSONObject proxima_lixeira;
-    private JSONObject lixeira_atual;
+    private JSONObject proxima_lixeira_json;
+    private JSONObject lixeira_atual_json;
+    private JSONObject lixeira_coletada_json;
     private boolean restart;
     private boolean coletado;
+    private boolean lixeira_anterior_coletada;
+    private static int id_lixeira_coletada;
+    private static double quantidade_lixo_coletado;
 
     /**
-     * Creates new form MainView
+     * CONSTRUTOR DA CLASSE
      */
     public MainViewCaminhao() {
         initComponents();
@@ -45,82 +49,130 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         this.label_lixeira_atual.setForeground(Color.red);
         this.btn_coletar.setEnabled(false);
         this.progress_coletando.setVisible(false);
+        this.label_info_server.setVisible(false);
 
         this.setVisible(true);
 
-        try {
-            this.proxima_lixeira = new JSONObject();
-            this.proxima_lixeira.put("lixeira_prox", "");
-        } catch (JSONException ex) {
-            Logger.getLogger(MainViewCaminhao.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        this.proxima_lixeira_json = new JSONObject();
+        this.id_lixeira_coletada = -1;
+        this.quantidade_lixo_coletado = -1;
 
         this.coletado = false;
         this.restart = false;
+        //variavel usada para ativar o botao de coleta no método "manda_proxima_lixeira"
+        lixeira_anterior_coletada = true;
         this.btn_descarregar.setVisible(false);
         this.btn_restart.setVisible(false);
         this.btn_restart.setEnabled(true);
         this.label_aviso.setVisible(false);
-        this.label_aviso1.setVisible(false);
+        this.label_aviso_descarregar.setVisible(false);
+        this.label_aviso_sup.setVisible(false);
 
         spinner_capacidade_maxima.setModel(new SpinnerNumberModel(1000, 1000, 10000, 100)); //min 1000
+
     }
 
     public void setProximaLixeiraNull() {
-        this.proxima_lixeira = null;
+        this.proxima_lixeira_json = null;
         this.label_proxima_lixeira.setText("N/D");
     }
 
-    public boolean isRestart() { //se o botao restart foi acionado
+    public boolean btn_reiniciar_clicado() { //se o botao restart foi acionado
         return this.restart;
     }
 
-    public void set_restart() {
-        this.btn_restart.setVisible(true);
-        // this.btn_restart.setEnabled(true);
+    public void ativar_btn_reiniciar() {
+        //if (!this.restart) {
+            this.label_aviso_sup.setText("Para iniciar um novo processo de coleta, clique em \'Restart\' ");
+            this.label_aviso_sup.setVisible(true);
+            this.btn_restart.setVisible(true);
+            this.btn_coletar.setEnabled(false);
+            // this.btn_restart.setEnabled(true);
+        //}
     }
 
     public void set_restartOFF() {
-        this.btn_restart.setVisible(false);
+        //this.btn_restart.setVisible(false);
         //this.btn_restart.setEnabled(false);
         this.restart = false;
+        this.btn_restart.setVisible(false);
     }
 
-    public void set_prox_lixeira(String lix) throws JSONException {
+    public void lixeira_foi_coletada() {
+        this.lixeira_anterior_coletada = true;
+    }
 
-        this.proxima_lixeira = new JSONObject(lix);
-        this.label_proxima_lixeira.setText("ID: " + this.proxima_lixeira.getInt("id") + " LAT: "
-                + this.proxima_lixeira.getInt("latitude_lixeira")
-                + "º LON: " + this.proxima_lixeira.getInt("longitude_lixeira")
-                + "º CAP: " + this.proxima_lixeira.getDouble("capacidade_lixeira"));
+    /**
+     * ALTERA OS DADOS DO CAMINHAO APÓS UMA COLETA DE ALGUMA LIXEIRA Após uma
+     * coleta, o caminhao envia as informações para o servidor e ele, por sua
+     * vez, atualiza os dados na lixeira coleta e retorna a informação para o
+     * caminhão.
+     *
+     * @param json recebe os dados do caminho - capacidade atual e disponivel.
+     */
+    public void set_date_truck(double capacidade_at, double capacidade_disp) {
+        this.capacidade_atual = capacidade_at;
+        this.capacidade_disponivel = capacidade_disponivel;
+        this.label_capacidade_atual.setText("" + capacidade_at);
+        this.label_capacidade_disponivel.setText("" + capacidade_disp);
+        this.label_info_server.setVisible(false);
+    }
 
-        if (this.proxima_lixeira.getDouble("capacidade_lixeira") < 1) {
-            this.label_aviso.setText("Não é possível fazer a coleta, lixeira vazia.");
+    public void manda_proxima_lixeira(String lix) throws JSONException {
+        JSONObject aux = new JSONObject(lix);
+
+        if (aux.getInt("id_lixeira") == this.id_lixeira_coletada) {
+            label_proxima_lixeira.setText("N/D");
         } else {
-            if (this.proxima_lixeira.getDouble("capacidade_lixeira") > (this.capacidade_maxima - this.capacidade_atual)) {
-                this.label_aviso.setText("Pouca quantidade disponível no caminhão - descarregue na estação");
+
+            this.proxima_lixeira_json = new JSONObject(lix);
+
+            this.label_proxima_lixeira.setText("ID: " + this.proxima_lixeira_json.getInt("id_lixeira") + " LAT: "
+                    + this.proxima_lixeira_json.getInt("latitude_lixeira")
+                    + "º LON: " + this.proxima_lixeira_json.getInt("longitude_lixeira")
+                    + "º CAP: " + this.proxima_lixeira_json.getDouble("capacidade_lixeira"));
+
+            if (this.proxima_lixeira_json.getDouble("capacidade_lixeira") < 1) {
+                this.label_aviso.setText("Não é possível fazer a coleta, lixeira vazia.");
+                this.label_aviso.setForeground(Color.red);
+                this.label_aviso.setVisible(true);
+                this.btn_coletar.setEnabled(false);
             } else {
-                this.label_aviso.setVisible(false);
+                if (this.proxima_lixeira_json.getDouble("capacidade_lixeira") > (this.capacidade_maxima - this.capacidade_atual)) {
+                    this.label_aviso.setText("Pouca quantidade disponível no caminhão - descarregue na estação");
+                    this.btn_coletar.setEnabled(true);
+                } else {
+                    this.label_aviso.setVisible(false);
+                    if (this.lixeira_anterior_coletada) { //se a lixeira anterior ja foi coletada
+                        this.btn_coletar.setEnabled(true);
+                    }
+
+                }
             }
         }
-
-        this.btn_coletar.setEnabled(true); //botão é habilitado
     }
 
-    public boolean isCollected() throws JSONException {//se fez a coleta
+    public boolean fez_alguma_coletada() throws JSONException {//se fez a coleta
         boolean col = false;
         if (this.coletado) {//se foi coletado
-            col = this.coletado;
+            col = true;
             this.coletado = false;
-
-            this.proxima_lixeira = null;
+            // this.proxima_lixeira_json = null;
         }
-
         return col;
     }
 
-    public void setDados(double cap_atual, boolean connected) {
+    public int get_id_lixeira_coletada() {
+        return this.id_lixeira_coletada;
+    }
 
+    public double get_qtd_lixo_coletado() {
+        return this.quantidade_lixo_coletado;
+    }
+
+    public void limpar_dados_lixeira_coletada() {
+        this.id_lixeira_coletada = -1;
+        this.quantidade_lixo_coletado = -1;
     }
 
     public void set_status_server_existCaminhao() {
@@ -171,10 +223,14 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         label_proxima_lixeira = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         label_minimo_capacidade_caminhao = new javax.swing.JLabel();
-        label_aviso1 = new javax.swing.JLabel();
+        label_aviso_descarregar = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        label_info_server = new javax.swing.JLabel();
+        label_aviso_sup = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(440, 300));
+        setPreferredSize(new java.awt.Dimension(440, 380));
         setResizable(false);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
@@ -212,7 +268,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
 
         jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel7.setText("LIXEIRA ATUAL NA POSICAO ");
+        jLabel7.setText("LIXEIRA ATUAL");
         getContentPane().add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 160, 440, -1));
 
         label_lixeira_atual.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -264,7 +320,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
                 btn_restartActionPerformed(evt);
             }
         });
-        getContentPane().add(btn_restart, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 10, 70, 20));
+        getContentPane().add(btn_restart, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 20, 70, 20));
 
         btn_descarregar.setText("Descarregar");
         btn_descarregar.setEnabled(false);
@@ -302,48 +358,94 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         label_minimo_capacidade_caminhao.setText("min:1000");
         getContentPane().add(label_minimo_capacidade_caminhao, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 40, -1, -1));
 
-        label_aviso1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        label_aviso1.setText("-------");
-        getContentPane().add(label_aviso1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 240, 440, 20));
+        label_aviso_descarregar.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        label_aviso_descarregar.setText("-------");
+        getContentPane().add(label_aviso_descarregar, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 240, 440, 20));
+
+        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 8)); // NOI18N
+        jLabel2.setForeground(new java.awt.Color(153, 153, 153));
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel2.setText("atualização automática a cada 7 segundos");
+        getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 330, 160, -1));
+
+        label_info_server.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
+        label_info_server.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        label_info_server.setText("Aguardando mensagem chegar no servidor...");
+        getContentPane().add(label_info_server, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 310, 440, -1));
+
+        label_aviso_sup.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        label_aviso_sup.setText("---");
+        getContentPane().add(label_aviso_sup, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 440, -1));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_coletarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_coletarActionPerformed
+        btn_coletar.setEnabled(false);
         try {
 
-            double value = proxima_lixeira.getDouble("capacidade_lixeira");
+            double value = proxima_lixeira_json.getDouble("capacidade_lixeira");
             if (value > 0) {
+                //verificar se a quantidade de lixo na próxima lixeira é menor ou igual a quantidade disponível do caminhao
                 if (value <= (this.capacidade_maxima - this.capacidade_atual)) {
 
-                    //verificar se a quantidade de lixo na próxima lixeira é menor ou igual a quantidade disponível do caminhao
                     this.coletado = true;
+                    //this.capacidade_atual += value;
 
-                    this.capacidade_atual += value;
-                    this.label_capacidade_atual.setText("" + this.capacidade_atual);
-                    this.btn_coletar.setEnabled(false);
+                    //thread para o componente "processo carregando"
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            progress_coletando.setVisible(true);
 
-                    this.lixeira_atual = new JSONObject(this.proxima_lixeira.toString());
-                    this.lixeira_atual.put("capacidade_lixeira", 0.0);
-                    this.label_lixeira_atual.setText("ID: " + this.lixeira_atual.getInt("id") + " LAT: "
-                            + this.lixeira_atual.getInt("latitude_lixeira")
-                            + "º LON: " + this.lixeira_atual.getInt("longitude_lixeira"));
+                            for (int i = 0; i < 100; i += 2) {
+                                try {
+                                    Thread.sleep(50);
+                                } catch (InterruptedException ex) {
+                                    Logger.getLogger(MainViewCaminhao.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                                progress_coletando.setValue(i);
+                            }
+                            progress_coletando.setVisible(false);
+                            //btn_coletar.setEnabled(true);
+                        }
+                    }.start();
+
+                    this.label_info_server.setText("Aguardando mensagem chegar no servidor...");
+                    this.label_info_server.setVisible(true);
+                    this.lixeira_anterior_coletada = false;
+
+                    //altera na interface os dados
+                    //this.label_capacidade_atual.setText("" + this.capacidade_atual);
+                    this.lixeira_atual_json = new JSONObject(this.proxima_lixeira_json.toString());
+                    //this.lixeira_atual_json.put("capacidade_lixeira", 0.0);
+                    this.label_lixeira_atual.setText("ID: " + this.proxima_lixeira_json.getInt("id_lixeira") + " LAT: "
+                            + this.proxima_lixeira_json.getInt("latitude_lixeira")
+                            + "º LON: " + this.proxima_lixeira_json.getInt("longitude_lixeira"));
 
                     this.label_proxima_lixeira.setText("N/D");
-                    this.label_capacidade_disponivel.setText("" + (this.capacidade_maxima - this.capacidade_atual));
+                    //this.label_capacidade_disponivel.setText("" + (this.capacidade_maxima - this.capacidade_atual));
+
+                    //adiciono ao json da lixeira coletada
+                    System.out.println("PEGUEI LIXEIRA COLETADA");
+
+                    this.id_lixeira_coletada = this.proxima_lixeira_json.getInt("id_lixeira");
+                    this.quantidade_lixo_coletado = value;
+                    System.out.println("=======================\n" + this.id_lixeira_coletada + "  " + this.quantidade_lixo_coletado);
+
                 } else {
                     this.label_aviso.setForeground(Color.red);
                     this.label_aviso.setText("Pouca quantidade disponível no caminhão - descarregue na estação");
                     this.label_aviso.setVisible(true);
 
+                    //libera opçao de descarregamento
                     this.btn_descarregar.setVisible(true);
                     this.btn_descarregar.setEnabled(true);
-
                 }
-            } else {
+            } else {/*
                 this.label_aviso.setForeground(Color.red);
                 this.label_aviso.setText("Não é possível fazer a coleta, lixeira vazia.");
-                this.label_aviso.setVisible(true);
+                this.label_aviso.setVisible(true);*/
             }
         } catch (JSONException ex) {
             Logger.getLogger(MainViewCaminhao.class.getName()).log(Level.SEVERE, null, ex);
@@ -381,11 +483,11 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     }//GEN-LAST:event_btn_confirma_cap_maxActionPerformed
 
     private void btn_restartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_restartActionPerformed
-        restart = true;
+        this.restart = true;
 
         this.label_lixeira_atual.setText("N/D");
         this.label_proxima_lixeira.setText("N/D");
-        //this.btn_restart.setEnabled(false);
+        this.label_aviso_sup.setVisible(false);
         this.btn_restart.setVisible(false);
     }//GEN-LAST:event_btn_restartActionPerformed
 
@@ -403,7 +505,7 @@ public class MainViewCaminhao extends javax.swing.JFrame {
         Thread t = new Thread() {
             @Override
             public void run() {
-                label_aviso1.setVisible(true);
+                label_aviso_descarregar.setVisible(true);
 
                 double capAtual = capacidade_atual;
                 double capDisp = capacidade_disponivel;
@@ -414,13 +516,13 @@ public class MainViewCaminhao extends javax.swing.JFrame {
                         double j = i;
                         Thread.sleep(60);
 
-                        label_aviso1.setText("Descarregando... " + i + "%");
+                        label_aviso_descarregar.setText("Descarregando... " + i + "%");
                         label_capacidade_atual.setText(String.valueOf((capAtual - (div * i))).format("%.2f", (capAtual - (div * j))));
 
                         //label_capacidade_disponivel.setText(String.valueOf((capDisp + (div * i))).format("%.2f", (capDisp + (div * j))));
                     }
                     Thread.sleep(70);
-                    label_aviso1.setVisible(false);
+                    label_aviso_descarregar.setVisible(false);
                     capacidade_atual = 0.0;
                     capacidade_disponivel = capacidade_maxima;
                 } catch (InterruptedException ex) {
@@ -467,15 +569,18 @@ public class MainViewCaminhao extends javax.swing.JFrame {
     private javax.swing.JButton btn_restart;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel label_add_cap_maxima;
     private javax.swing.JLabel label_aviso;
-    private javax.swing.JLabel label_aviso1;
+    private javax.swing.JLabel label_aviso_descarregar;
+    private javax.swing.JLabel label_aviso_sup;
     private javax.swing.JLabel label_capacidade_atual;
     private javax.swing.JLabel label_capacidade_disponivel;
     private javax.swing.JLabel label_capacidade_maxima;
+    private javax.swing.JLabel label_info_server;
     private javax.swing.JLabel label_lixeira_atual;
     private javax.swing.JLabel label_minimo_capacidade_caminhao;
     private javax.swing.JLabel label_proxima_lixeira;
