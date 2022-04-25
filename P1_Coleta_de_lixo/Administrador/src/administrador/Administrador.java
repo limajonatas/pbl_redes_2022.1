@@ -16,12 +16,9 @@ import view.MainViewAdministrador;
 public class Administrador extends Thread {
 
     private static final String ipCliente = "";
-    private static int porta;
-    private static int main_port_server;
     private static int port_server;
     private static DatagramSocket adm_socket;
     private static JSONObject json;
-    private static boolean serverOk;
     private static byte[] cartaAEnviar = new byte[2048];
     private static InetAddress ip;
     private static MainViewAdministrador mainview;
@@ -40,7 +37,7 @@ public class Administrador extends Thread {
 
                     cartaAEnviar = (json.toString()).getBytes(); //converte a mensagem String para array de bytes
 
-                    System.out.println("__________\n" + json.toString());
+                    System.out.println("<<[ADMINISTRADOR]: " + json.toString());
 
                     //adicionar a mensagem à um "envelope", que inclui o tamanho, ip e a porta de destino
                     DatagramPacket envelopeAEnviar = new DatagramPacket(cartaAEnviar, cartaAEnviar.length, ip, port_server);
@@ -123,6 +120,9 @@ public class Administrador extends Thread {
 
     }
 
+    /**
+     * INICIALIZA THREADS
+     */
     private static void startupThreads() {
         Thread send = new Administrador();
         send.start();
@@ -202,18 +202,12 @@ public class Administrador extends Thread {
         a.start();
     }
 
-    /*public static void set_get_Date() throws JSONException {
-        if (mainview != null) {//garantir que a instancia da tela principal nao seja utilizada antes de ser criada fora da thread
-            //pega informação sobre a capacidade atual
-            json.put("capacidade_atual", mainview.getDate().getDouble("capacidade_atual"));
-            json.put("capacidade_disponivel", mainview.getDate().getDouble("capacidade_disponivel"));
-
-            mainview.setDados(json.getDouble("capacidade_max"),
-                    json.getDouble("capacidade_atual"), json.getBoolean("bloqueio"),
-                    json.getInt("latitude"), json.getInt("longitude"), json.getBoolean("connected"), json.getDouble("capacidade_disponivel"));
-        }
-
-    }*/
+    /**
+     * MAIN - INICIALIZA O SOCKET E AS THREADS
+     * @param args
+     * @throws JSONException
+     * @throws UnknownHostException 
+     */
     public static void main(String args[]) throws JSONException, UnknownHostException {
         try {
             atualizar = false;
